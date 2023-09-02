@@ -23,7 +23,7 @@ esptool --chip esp32s3 --port COMx erase_flash
 esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
 ```
 4. Download and install [Python3](https://www.python.org/downloads/)
-5. Install mpremote from PowerShell
+5. Install [mpremote](https://pypi.org/project/mpremote/) from PowerShell
 ```PowerShell
 py -m pip install mpremote
 py -m mpremote version
