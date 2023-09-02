@@ -15,6 +15,7 @@ The embedded UI design is likely to be through
 - Display data
 
 I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
+My setup is in VSCode + PowerShell terminal.
 1. Download the latest [esptool](https://github.com/espressif/esptool/releases/tag/v4.6.2) to program the ESP32-S3 through its ROM bootloader
 2. Download the latest [micropython .bin](https://micropython.org/download/UM_PROS3/)
 3. Put the ProS3 in download mode:
@@ -32,7 +33,31 @@ esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
 py -m pip install mpremote
 py -m mpremote version
 ```
-7. Open a REPL terminal communication with the ProS3 `py -m mpremote`
+7. Copy over the [pros3.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/pros3.py) helper library and the [example.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/example.py) files
+```
+py -m mpremote cp pros3.py :pros3.py
+py -m mpremote cp example.py :example.py
+```
+8. Run the code and you should see:
+```
+PS C:\mypath> py -m mpremote run example.py    
+
+Hello from ProS3!
+------------------
+
+Memory Info - gc.mem_free()
+---------------------------
+8191392 Bytes
+
+Flash - os.statvfs('/')
+---------------------------
+Size: 14680064 Bytes
+Free: 14659584 Bytes
+
+Pixel Time!
+```
+
+To open a REPL terminal communication with the ProS3 `py -m mpremote`
 
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
