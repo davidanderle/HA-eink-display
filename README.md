@@ -17,13 +17,17 @@ The embedded UI design is likely to be through
 I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
 1. Download the latest [esptool](https://github.com/espressif/esptool/releases/tag/v4.6.2) to program the ESP32-S3 through its ROM bootloader
 2. Download the latest [micropython .bin](https://micropython.org/download/UM_PROS3/)
-3. Load the MicroPython binary on the ProS3 (replace `x` with your COM port) from CMD:
+3. Put the ProS3 in download mode:
+   - Press & hold the `BOOT` button
+   - Press the `RST` button
+   - Release the `BOOT` button
+4. Load the MicroPython binary on the ProS3 (replace `x` with your COM port) from CMD:
 ```cmd
 esptool --chip esp32s3 --port COMx erase_flash
 esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
 ```
-4. Download and install [Python3](https://www.python.org/downloads/)
-5. Install [mpremote](https://pypi.org/project/mpremote/) from PowerShell
+5. Download and install [Python3](https://www.python.org/downloads/)
+6. Install [mpremote](https://pypi.org/project/mpremote/) from PowerShell
 ```PowerShell
 py -m pip install mpremote
 py -m mpremote version
