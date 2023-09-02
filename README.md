@@ -32,6 +32,7 @@ esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
 py -m pip install mpremote
 py -m mpremote version
 ```
+7. Open a REPL terminal communication with the ProS3 `py -m mpremote`
 
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
