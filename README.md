@@ -14,13 +14,25 @@ The embedded UI design is likely to be through
 - Connect Google API from uPython
 - Display data
 
+I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
 1. Download the latest [esptool](https://github.com/espressif/esptool/releases/tag/v4.6.2) to program the ESP32-S3 through its ROM bootloader
-2. Download the [micropython binary](https://micropython.org/download/UM_PROS3/)
+2. Download the latest [micropython .bin](https://micropython.org/download/UM_PROS3/)
+3. Load the MicroPython binary on the ProS3 (replace `x` with your COM port) from CMD:
+```cmd
+esptool --chip esp32s3 --port COMx erase_flash
+esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
+```
+4. Download and install [Python3](https://www.python.org/downloads/)
+5. Install mpremote from PowerShell
+```PowerShell
+py -m pip install mpremote
+py -m mpremote version
+```
+
 # BOM
-- [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
+- [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
 - [375678 LiPo](https://www.aliexpress.com/item/1005004946019552.html?spm=a2g0o.cart.0.0.d80e38daNEjZz4&mp=1#nav-specification), 2500mAh, 3.7mm thick battery £13.41
 - [E-Ink VB3300-KCA](https://www.waveshare.com/product/displays/e-paper/epaper-1/10.3inch-e-paper-d.htm?___SID=U), flexible, 450ms full refresh, 4bpp, 10.3", 1872x1404 px display, £156.23+postage
-- [Molex PicoBlade cable](https://thepihut.com/products/molex-pico-blade-2-pin-cable-200mm) to connect the battery to the ProS3, £3.79
 
 # References
 https://www.waveshare.com/wiki/9.7inch_e-Paper_HAT
