@@ -69,7 +69,7 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 # References
 
 ICE driving board
-![image](https://github.com/davidanderle/eink_calendar/assets/17354704/b1536dc3-9c99-44f1-98c3-582ff0df6523)
+![image](https://github.com/davidanderle/eink_calendar/assets/17354704/4ed23adb-f305-409e-af18-b2373b48f73e)
 
 MicroPython API
 https://docs.micropython.org/en/latest/esp32/quickref.html#
