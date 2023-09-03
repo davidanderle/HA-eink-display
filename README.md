@@ -67,6 +67,10 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 - [E-Ink VB3300-KCA](https://www.waveshare.com/product/displays/e-paper/epaper-1/10.3inch-e-paper-d.htm?___SID=U), flexible, 450ms full refresh, 4bpp, 10.3", 1872x1404 px display, £156.23+postage
 
 # References
+
+ICE driving board
+![image](https://github.com/davidanderle/eink_calendar/assets/17354704/b1536dc3-9c99-44f1-98c3-582ff0df6523)
+
 MicroPython API
 https://docs.micropython.org/en/latest/esp32/quickref.html#
 
