@@ -69,6 +69,9 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 MicroPython API
 https://docs.micropython.org/en/latest/esp32/quickref.html#
 
+mpremote control
+https://docs.micropython.org/en/latest/reference/mpremote.html
+
 https://www.waveshare.com/wiki/9.7inch_e-Paper_HAT
 
 https://github.com/speedyg0nz/MagInkCal
