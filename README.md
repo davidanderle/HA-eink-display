@@ -13,7 +13,8 @@ The embedded UI design is likely to be through
 - Implement LVGL from SquarlineStudio on ProS3 to render the UI
 - Connect Google API from uPython
 - Display data
-- Compile the uPython code to .mpy using `mpy-cross` to accelerate execution and occupy less flas
+- Compile the uPython code to .mpy using `mpy-cross` to accelerate execution and occupy less flash
+- investigate webrepl https://micropython.org/webrepl/ to update files over-the-air
 
 I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
 My setup is in VSCode + PowerShell terminal.
