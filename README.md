@@ -13,6 +13,7 @@ The embedded UI design is likely to be through
 - Implement LVGL from SquarlineStudio on ProS3 to render the UI
 - Connect Google API from uPython
 - Display data
+- Compile the uPython code to .mpy using `mpy-cross` to accelerate execution and occupy less flas
 
 I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
 My setup is in VSCode + PowerShell terminal.
@@ -65,6 +66,9 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 - [E-Ink VB3300-KCA](https://www.waveshare.com/product/displays/e-paper/epaper-1/10.3inch-e-paper-d.htm?___SID=U), flexible, 450ms full refresh, 4bpp, 10.3", 1872x1404 px display, £156.23+postage
 
 # References
+MicroPython API
+https://docs.micropython.org/en/latest/esp32/quickref.html#
+
 https://www.waveshare.com/wiki/9.7inch_e-Paper_HAT
 
 https://github.com/speedyg0nz/MagInkCal
