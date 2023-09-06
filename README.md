@@ -61,6 +61,9 @@ Pixel Time!
 
 To open a REPL terminal communication with the ProS3 `py -m mpremote`
 
+# Hardware setup
+1. Set the dip-switches into a 0b001 position (sw0 at ON position) to enable the SPI Slave communication
+
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
 - [375678 LiPo](https://www.aliexpress.com/item/1005004946019552.html?spm=a2g0o.cart.0.0.d80e38daNEjZz4&mp=1#nav-specification), 2500mAh, 3.7mm thick battery £13.41
@@ -69,7 +72,7 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 # References
 
 ICE driving board
-![image](https://github.com/davidanderle/eink_calendar/assets/17354704/4ed23adb-f305-409e-af18-b2373b48f73e)
+![image](https://github.com/davidanderle/eink_calendar/assets/17354704/6e740d73-1063-4316-bc75-d9023569a75a)
 
 MicroPython API
 https://docs.micropython.org/en/latest/esp32/quickref.html#
