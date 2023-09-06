@@ -69,6 +69,14 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 - [375678 LiPo](https://www.aliexpress.com/item/1005004946019552.html?spm=a2g0o.cart.0.0.d80e38daNEjZz4&mp=1#nav-specification), 2500mAh, 3.7mm thick battery £13.41
 - [E-Ink VB3300-KCA](https://www.waveshare.com/product/displays/e-paper/epaper-1/10.3inch-e-paper-d.htm?___SID=U), flexible, 450ms full refresh, 4bpp, 10.3", 1872x1404 px display, £156.23+postage
 
+# Potential libraries to use
+
+https://github.com/robweber/omni-epd
+
+https://github.com/GregDMeyer/IT8951
+
+https://github.com/txoof/PaperPi/tree/main
+
 # References
 
 ICE driving board
