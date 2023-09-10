@@ -1,3 +1,4 @@
 esptool*
 E-LINK-TCON-DEMO
 resources
+*.pyc
