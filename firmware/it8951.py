@@ -191,7 +191,9 @@ class it8951:
             self._ncs(0)
             self._spi.write_readinto(txdata, rxdata)
             # Take off the first 4 bytes (preampble and dummy words)
-            return array('H', rxdata[4:])
+            u16_data = array('H', rxdata[4:])
+            u16_data.byteswap()
+            return u16_data
         finally:
             self._ncs(1)
             
