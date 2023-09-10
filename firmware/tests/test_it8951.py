@@ -67,8 +67,8 @@ class test_it8951(unittest.TestCase):
         mock_spi.write_readinto = spi_write_readinto
         tcon = it8951(mock_spi, mock_ncs)
         rxed_words = tcon.read_data(len)
-        self.assertEqual(rxed_words.tolist(), expected_words)
-        self.assertEqual(bytes(txed_bytes), bytes(expected_tx))
+        self.assertEqual(rxed_words, expected_words)
+        self.assertEqual(txed_bytes, bytes(expected_tx))
     
     def setUp(self) -> None:
         # Ensure that the buffer is clear before each test
