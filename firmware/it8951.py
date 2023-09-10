@@ -1,4 +1,5 @@
 import sys
+# TODO: Remove as not compatible with uP
 from array import array
 if sys.platform == "esp32":
     import pros3
@@ -57,7 +58,6 @@ class Register:
 
     MCSR      = RegisterBase.MEMORY_CONV + 0x00
     LISAR     = RegisterBase.MEMORY_CONV + 0x08
-
 
 class CommsMode:
     # TEST_CFG[2:0] = 0b000, I80CPCR = 0 (not supported)
@@ -129,6 +129,37 @@ class DisplayModes:
     A2    = 6
     DU4   = 7
 
+def u16_list_to_be_bytearray(data: list) -> bytearray:
+    """
+    This is a helper function to convert a u16 list to a big-endian byte array
+    Args:
+        data: u16 list to convert
+    Raises:
+        TypeError exception if any of the element in the list is greater than 65535
+    Returns: Big-endian byte array representation of the input data
+    """
+    txdata = bytearray()
+    for d in data:
+        if d > 65535: raise TypeError("Invalid type. List must contain u16 elements!")
+        txdata.extend(d.to_bytes(2, 'big'))
+    return txdata
+    
+def be_bytearray_to_u16_list(data: bytearray) -> list:
+    """
+    This is a helper function to convert a big-endian byte array to a u16 list
+    Args:
+        data: byte array to convert. Must have even number of elements.
+    Raises:
+        IndexError exception is thrown if there are odd number of elements in the array
+    Returns:
+        u16 list representation of the input data
+    """
+    if len(data)%2 != 0: raise IndexError("Byte array must have even number of elements")
+    u16_data = []
+    for i in range(0, len(data), 2):
+        u16_data.append((data[i] << 8) | data[i+1])
+    return u16_data
+
 # For the SPI protocol description, refer to 
 # https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
 # https://v4.cecdn.yun300.cn/100001_1909185148/IT8951_I80+ProgrammingGuide_16bits_20170904_v2.7_common_CXDX.pdf
@@ -150,40 +181,36 @@ class it8951:
             command: Command to execute
         """
         try:
-            self._ncs(0)
             txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(4, 'big')
+            self._ncs(0)
             self._spi.write(txdata)
         finally:
             self._ncs(1)
     
-    def write_data(self, data: array):
+    def write_data(self, data: list):
         """
         Writes u16 words to the IT8951.
         Args: 
-            data (array.array): A u16 array containing the data to be written
-        Raises:
-            ValueError: If the input data is not a u16 array with type code 'H'
+            data: A list of u16 elements containing the data to be written
         """
-        if data.typecode != 'H':
-            raise ValueError("Data must be u16[] with type code 'H'")
         if not data: return
 
         try:
             # Convert to big-endian format (MSByte first)
-            data.byteswap()
+            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big') \
+                     + u16_list_to_be_bytearray(data)
             self._ncs(0)
-            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big') + data.tobytes()
             self._spi.write(txdata)
         finally:
             self._ncs(1)
-            
-    def read_data(self, length: int) -> array:
+
+    def read_data(self, length: int) -> list:
         """
         Reads the specified number of 16bit words from the IT8951.
         Args:
             length: number of u16 elements to read
         """
-        if length == 0: return array('H', [])
+        if length == 0: return []
         try:
             # The first word returned from the controller is dummy:u16
             txdata = SpiPreamble.READ_DATA.to_bytes(2, 'big') + bytearray(length*2+2)
@@ -191,29 +218,32 @@ class it8951:
             self._ncs(0)
             self._spi.write_readinto(txdata, rxdata)
             # Take off the first 4 bytes (preampble and dummy words)
-            u16_data = array('H', rxdata[4:])
-            u16_data.byteswap()
-            return u16_data
+            rxdata = rxdata[4:]
+            return be_bytearray_to_u16_list(rxdata)
         finally:
             self._ncs(1)
             
-    # Byte array data in little-endian format
-    def write_reg(self, reg: Register, data: bytearray):
+    def write_reg(self, reg: Register, data: list):
+        """
+        Writes the specified number of words to a register
+        Args:
+            reg: Register to write to
+            data: u16 words to write to reg
+        """
         self.send_command(Command.REG_WR)
-        txdata = int.to_bytes(reg, 2, 'little').extend(data)
+        txdata = reg.to_bytes(2, 'big') + u16_list_to_be_bytearray(data)
         self.write_data(txdata)
-        
-    def read_reg(self, reg: Register, length: int) -> bytearray:
+
+    def bytearray_to_list(bytes: bytearray) -> list:
+        pass
+    
+    def read_reg(self, reg: Register, length: int) -> list:
+        """
+        Reads the specified number of words from a register
+        Args:
+            reg: Register to write to
+            data: u16 words to write to reg
+        """
         self.send_command(Command.REG_RD)
-        self.write_data(int.to_bytes(reg, 2, 'little'))
+        self.write_data(reg.to_bytes(2, 'big'))
         return self.read_data(length)
-
-# The display can create images at 4bpp
-# The display's full average update should take about 26.5mW
-
-# The EPS waveform file should be stored in SPI flash
-
-
-
-
-
