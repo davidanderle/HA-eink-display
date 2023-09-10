@@ -50,12 +50,23 @@ class test_it8951(unittest.TestCase):
     
     @parameterized.expand([
         (0, []),
-        (2, [0x0000, 0x0000])
+        (1, [0x1234]),
+        (4, [0x0000, 0x7FFF, 0x8000, 0xFFFF])
     ])
     def test_read_data(self, len, expected_words):
+        def spi_write_readinto(txdata: bytearray, rxdata: bytearray):
+            u16_array = array('H', [0,0]+expected_words)
+            u16_array.byteswap()
+            rxdata[:] = u16_array.tobytes()
+            #formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in rxdata])
+            #print(f'SPI MISO: {formatted_bytes}')
+            #formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in txdata])
+            #print(f'SPI MOSI: {formatted_bytes}')
+
+        mock_spi.write_readinto = spi_write_readinto
         tcon = it8951(mock_spi, mock_ncs)
         rxed_words = tcon.read_data(len)
-        self.assertEqual(rxed_words, array('H', expected_words))
+        self.assertEqual(rxed_words.tolist(), expected_words)
     
     def setUp(self) -> None:
         # Ensure that the buffer is clear before each test
