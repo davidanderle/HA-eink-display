@@ -1,4 +1,5 @@
 import sys
+from array import array
 if sys.platform == "esp32":
     import pros3
     from machine import Pin, SPI
@@ -143,6 +144,11 @@ class it8951:
         self._ncs = ncs
     
     def send_command(self, command: Command):
+        """
+        Sends a command to the IT8951.
+        Args:
+            command: Command to execute
+        """
         try:
             self._ncs(0)
             txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(4, 'big')
@@ -150,25 +156,44 @@ class it8951:
         finally:
             self._ncs(1)
     
-    # Byte array data in little-endian format
-    def write_data(self, data: bytearray):
+    def write_data(self, data: array):
+        """
+        Writes u16 words to the IT8951.
+        Args: 
+            data (array.array): A u16 array containing the data to be written
+        Raises:
+            ValueError: If the input data is not a u16 array with type code 'H'
+        """
+        if data.typecode != 'H':
+            raise ValueError("Data must be u16[] with type code 'H'")
+        if not data: return
+
         try:
+            # Convert to big-endian format (MSByte first)
+            data.byteswap()
             self._ncs(0)
-            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big').extend(data)
+            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big') + data.tobytes()
             self._spi.write(txdata)
         finally:
             self._ncs(1)
             
-    def read_data(self, length: int) -> bytearray:
+    def read_data(self, length: int) -> array:
+        """
+        Reads the specified number of 16bit words from the IT8951.
+        Args:
+            length: number of u16 elements to read
+        """
+        if length == 0: return array('H', [])
         try:
             # The first word returned from the controller is dummy:u16
-            txdata = SpiPreamble.to_bytes(2, 'big').extend(bytearray(length+1))
+            txdata = SpiPreamble.READ_DATA.to_bytes(2, 'big') + bytearray(length*2+2)
             rxdata = bytearray(len(txdata))
             self._ncs(0)
             self._spi.write_readinto(txdata, rxdata)
-            return rxdata[4:]
+            # Take off the first 4 bytes (preampble and dummy words)
+            return array('H', rxdata[4:])
         finally:
-            self._ncs(0)
+            self._ncs(1)
             
     # Byte array data in little-endian format
     def write_reg(self, reg: Register, data: bytearray):
