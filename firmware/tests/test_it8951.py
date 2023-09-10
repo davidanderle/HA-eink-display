@@ -59,10 +59,10 @@ class test_it8951(unittest.TestCase):
             u16_array.byteswap()
             rxdata[:] = u16_array.tobytes()
             txed_bytes.extend(txdata)
-            formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in rxdata])
-            print(f'SPI MISO: {formatted_bytes}')
-            formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in txdata])
-            print(f'SPI MOSI: {formatted_bytes}')
+            #formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in rxdata])
+            #print(f'SPI MISO: {formatted_bytes}')
+            #formatted_bytes = '-'.join([f'0x{byte:02X}' for byte in txdata])
+            #print(f'SPI MOSI: {formatted_bytes}')
 
         mock_spi.write_readinto = spi_write_readinto
         tcon = it8951(mock_spi, mock_ncs)
