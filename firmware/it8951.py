@@ -1,5 +1,13 @@
-from machine import Pin, SPI
-import pros3
+import sys
+if sys.platform == "esp32":
+    import pros3
+    from machine import Pin, SPI
+if sys.platform == "win32":
+    from unittest.mock import Mock
+    class SPI:
+        pass
+    class Pin:
+        pass
 
 # IT8951 memory map
 class RegisterBase:
@@ -120,37 +128,58 @@ class DisplayModes:
     A2    = 6
     DU4   = 7
 
+# For the SPI protocol description, refer to 
+# https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
+# https://v4.cecdn.yun300.cn/100001_1909185148/IT8951_I80+ProgrammingGuide_16bits_20170904_v2.7_common_CXDX.pdf
 class it8951:
-    # TODO: The SPI should be passed in from the top level
-    def __init__(self):
+    def __init__(self, spi: SPI, ncs: Pin):
         # There are 2 hardware SPI channels on the ESP32 and they can be mapped
         # to any pin, however, they are limited to 40MHz if not used on the 
         # default ones. The IT8951's maximum SPI speed is 24MHz either way, so 
         # we're good. The data must be clocked out MSB first at SPI Mode 0 or 3 
         # (0 used). At 24MHz a full refresh should take about <450ms
-        # TODO: The channel id may not be 1
-        # TODO: 16bit frame-size may not be supported
-        self.spi = SPI(2, 24_000_000, pros3.SPI_CLK, pros3.SPI_MOSI, pros3.SPI_MISO, SPI.MSB, polarity=0, phase=0, bits=16)
+        self._spi = spi
         # Active-low chip select
-        self.cs = Pin(34, mode=Pin.OUT, value=1)
+        self._ncs = ncs
+    
     def send_command(self, command: Command):
         try:
-            self.cs(0)
-            txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(length=4, byteorder='little')
-            self.spi.write(txdata)
+            self._ncs(0)
+            txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(4, 'big')
+            self._spi.write(txdata)
         finally:
-            self.cs(1)
+            self._ncs(1)
     
     # Byte array data in little-endian format
     def write_data(self, data: bytearray):
         try:
-            self.cs(0)
-            txdata = spi_preamble.WRITE_DATA.to_bytes(length=2, byteorder='little').extend(data)
-            self.spi.write(txdata)
+            self._ncs(0)
+            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big').extend(data)
+            self._spi.write(txdata)
         finally:
-            self.cs(1)
+            self._ncs(1)
             
-    def write_reg(self, reg: Register, data)
+    def read_data(self, length: int) -> bytearray:
+        try:
+            # The first word returned from the controller is dummy:u16
+            txdata = SpiPreamble.to_bytes(2, 'big').extend(bytearray(length+1))
+            rxdata = bytearray(len(txdata))
+            self._ncs(0)
+            self._spi.write_readinto(txdata, rxdata)
+            return rxdata[4:]
+        finally:
+            self._ncs(0)
+            
+    # Byte array data in little-endian format
+    def write_reg(self, reg: Register, data: bytearray):
+        self.send_command(Command.REG_WR)
+        txdata = int.to_bytes(reg, 2, 'little').extend(data)
+        self.write_data(txdata)
+        
+    def read_reg(self, reg: Register, length: int) -> bytearray:
+        self.send_command(Command.REG_RD)
+        self.write_data(int.to_bytes(reg, 2, 'little'))
+        return self.read_data(length)
 
 # The display can create images at 4bpp
 # The display's full average update should take about 26.5mW
