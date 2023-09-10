@@ -1,9 +1,9 @@
 # eink_calendar
-I started this project on 27 Aug 2023 and is a work in progress as of 28 Aug 2023.
-ESP-S3 consumes 5uA in deep sleep
+I started this project on 27 Aug 2023 and is a work in progress
+ESP32-S3 consumes 5uA in deep sleep
 
 # Goal
-A thin, light-weigth, long battery life E-Ink-based calendar that syncs its contect to 2 gmail calendars.
+A thin, light-weight, long battery life E-Ink-based calendar that syncs its content to 2 gmail calendars.
 
 The embedded UI design is likely to be through 
 
@@ -61,8 +61,20 @@ Pixel Time!
 
 To open a REPL terminal communication with the ProS3 `py -m mpremote`
 
+# Test setup
+1. Ensure that pip is in the PATH:
+```
+$Env:Path += ';C:\<path-to-pythonXXX>\Scripts'
+```
+2. Install unittest
+
 # Hardware setup
 1. Set the dip-switches into a 0b001 position (sw0 at ON position) to enable the SPI Slave communication
+
+# Required packages
+```
+py -m mpremote mip install --no-mpy unittest
+```
 
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
