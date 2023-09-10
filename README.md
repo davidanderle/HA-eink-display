@@ -66,7 +66,14 @@ To open a REPL terminal communication with the ProS3 `py -m mpremote`
 ```
 $Env:Path += ';C:\<path-to-pythonXXX>\Scripts'
 ```
-2. Install unittest
+2. Install unittest requirements
+```
+pip install parameterized
+```
+3. Run unit tests:
+```
+py -m unittest discover -s tests
+```
 
 # Hardware setup
 1. Set the dip-switches into a 0b001 position (sw0 at ON position) to enable the SPI Slave communication
