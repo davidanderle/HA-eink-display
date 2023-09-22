@@ -96,6 +96,11 @@ https://github.com/GregDMeyer/IT8951
 
 https://github.com/txoof/PaperPi/tree/main
 
+# Reading the external SPI NOR flash from the ICE board
+Using a J-Link Ultra+, download the SEGGER J-Flash SPI tool and go `Target > Read back > Entire chip`. Ensure that your SPI speed is sufficiently low to cope with the wiring's length. At `1MHz` it took me 34sec to download.
+![image](https://github.com/davidanderle/eink_calendar/assets/17354704/6486e221-4802-4124-b2e9-9e668b6178bf)
+
+
 # References
 
 ICE driving board
