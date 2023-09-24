@@ -164,7 +164,7 @@ def be_bytearray_to_u16_list(data: bytearray) -> list:
 # https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
 # https://v4.cecdn.yun300.cn/100001_1909185148/IT8951_I80+ProgrammingGuide_16bits_20170904_v2.7_common_CXDX.pdf
 class it8951:
-    def __init__(self, spi: SPI, ncs: Pin):
+    def __init__(self, spi: SPI, ncs: Pin, hrdy: Pin):
         # There are 2 hardware SPI channels on the ESP32 and they can be mapped
         # to any pin, however, they are limited to 40MHz if not used on the 
         # default ones. The IT8951's maximum SPI speed is 24MHz either way, so 
@@ -173,7 +173,13 @@ class it8951:
         self._spi = spi
         # Active-low chip select
         self._ncs = ncs
+        # Host-ready pin (toggled by the IT8951)
+        self._hrdy = hrdy
     
+    # TODO: Add this in based on the example project
+    def _wait_ready(self):
+        while self._hrdy.value() == 0: pass
+
     def send_command(self, command: Command):
         """
         Sends a command to the IT8951.
@@ -182,6 +188,7 @@ class it8951:
         """
         try:
             txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(4, 'big')
+            self._wait_ready()
             self._ncs(0)
             self._spi.write(txdata)
         finally:
@@ -199,6 +206,7 @@ class it8951:
             # Convert to big-endian format (MSByte first)
             txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big') \
                      + u16_list_to_be_bytearray(data)
+            self._wait_ready()
             self._ncs(0)
             self._spi.write(txdata)
         finally:
@@ -215,6 +223,7 @@ class it8951:
             # The first word returned from the controller is dummy:u16
             txdata = SpiPreamble.READ_DATA.to_bytes(2, 'big') + bytearray(length*2+2)
             rxdata = bytearray(len(txdata))
+            self._wait_ready()
             self._ncs(0)
             self._spi.write_readinto(txdata, rxdata)
             # Take off the first 4 bytes (preampble and dummy words)
