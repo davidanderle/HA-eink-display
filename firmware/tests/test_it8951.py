@@ -22,6 +22,10 @@ mock_spi.write.side_effect = spi_write
 mock_ncs = Mock()
 mock_ncs.side_effect = gpio_set_value
 
+# Pretend that the HRDY is high (IT8951 ready to accept commands)
+mock_hrdy = Mock()
+mock_hrdy.value.return_value = 1
+
 txed_bytes = bytearray()
 
 class test_it8951(unittest.TestCase):
@@ -33,7 +37,7 @@ class test_it8951(unittest.TestCase):
         (Command.GET_DEV_INFO, [0x60, 0x00, 0x03, 0x02]),
     ])
     def test_send_command(self, command, expected_bytes):
-        tcon = it8951(mock_spi, mock_ncs)
+        tcon = it8951(mock_spi, mock_ncs, mock_hrdy)
         tcon.send_command(command)
         self.assertEqual(txed_bytes, bytes(expected_bytes))
     
@@ -44,7 +48,7 @@ class test_it8951(unittest.TestCase):
         ([],                       [])
     ])
     def test_write_data(self, data, expected_bytes):
-        tcon = it8951(mock_spi, mock_ncs)
+        tcon = it8951(mock_spi, mock_ncs, mock_hrdy)
         tcon.write_data(array('H', data))
         self.assertEqual(txed_bytes, bytes(expected_bytes))
     
@@ -65,7 +69,7 @@ class test_it8951(unittest.TestCase):
             #print(f'SPI MOSI: {formatted_bytes}')
 
         mock_spi.write_readinto = spi_write_readinto
-        tcon = it8951(mock_spi, mock_ncs)
+        tcon = it8951(mock_spi, mock_ncs, mock_hrdy)
         rxed_words = tcon.read_data(len)
         self.assertEqual(rxed_words, expected_words)
         self.assertEqual(txed_bytes, bytes(expected_tx))
