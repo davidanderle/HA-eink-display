@@ -233,9 +233,6 @@ class it8951:
         self.send_command(Command.REG_WR)
         txdata = reg.to_bytes(2, 'big') + u16_list_to_be_bytearray(data)
         self.write_data(txdata)
-
-    def bytearray_to_list(bytes: bytearray) -> list:
-        pass
     
     def read_reg(self, reg: Register, length: int) -> list:
         """
