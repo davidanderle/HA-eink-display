@@ -33,7 +33,7 @@ class test_it8951(unittest.TestCase):
     @parameterized.expand([
         (Command.SYS_RUN,      [0x60, 0x00, 0x00, 0x01]),
         (Command.STANDBY,      [0x60, 0x00, 0x00, 0x02]),
-        (Command.SET_VCOM,     [0x60, 0x00, 0x00, 0x39]),
+        (Command.CMD_VCOM,     [0x60, 0x00, 0x00, 0x39]),
         (Command.GET_DEV_INFO, [0x60, 0x00, 0x03, 0x02]),
     ])
     def test_send_command(self, command, expected_bytes):
