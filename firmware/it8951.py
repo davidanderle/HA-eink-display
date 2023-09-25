@@ -79,29 +79,31 @@ class SpiPreamble:
     
 class Command:
     # System running command: enable all clocks, and go to active state
-    SYS_RUN      = 0x0001
+    SYS_RUN         = 0x0001
     # Standby command: gate off clocks, and go to standby state
-    STANDBY      = 0x0002
+    STANDBY         = 0x0002
     # Sleep command: disable all clocks, and go to sleep state
-    SLEEP        = 0x0003
+    SLEEP           = 0x0003
     # Read register command
-    REG_RD       = 0x0010
+    REG_RD          = 0x0010
     # Write register command
-    REG_WR       = 0x0011
-    MEM_BST_RD_T = 0x0012
-    MEM_BST_RD_S = 0x0013
-    MEM_BST_WR   = 0x0014
-    MEM_BST_END  = 0x0015
-    LD_IMG       = 0x0020
-    LD_IMG_AREA  = 0x0021
-    LD_IMG_END   = 0x0022
-    LD_IMG_1BPP  = 0x0095
-    # TODO: Continue
-    DPY_AREA = 0x0034
-    POWER_SEQUENCE = 0x0038
-    SET_VCOM = 0x0039
-    GET_DEV_INFO = 0x0302
-    DPY_BUF_AREA = 0x0037
+    REG_WR          = 0x0011
+    MEM_BST_RD_T    = 0x0012
+    MEM_BST_RD_S    = 0x0013
+    MEM_BST_WR      = 0x0014
+    MEM_BST_END     = 0x0015
+    LD_IMG          = 0x0020
+    LD_IMG_AREA     = 0x0021
+    LD_IMG_END      = 0x0022
+    LD_IMG_1BPP     = 0x0095
+    DPY_AREA        = 0x0034
+    DPY_BUF_AREA    = 0x0037
+    POWER_SEQUENCE  = 0x0038
+    CMD_VCOM        = 0x0039
+    FILL_RECT       = 0x003A
+    CMD_TEMPERATURE = 0x0040
+    BPP_SETTINGS    = 0x0080
+    GET_DEV_INFO    = 0x0302
 
 # Color-depth of the display to drive
 class ColorDepth:
@@ -128,7 +130,45 @@ class DisplayModes:
     GLD16 = 5
     A2    = 6
     DU4   = 7
+    
+class DeviceInfo:
+    Size = 40
+    def __init__(self, panel_width: int, panel_height: int, img_buff_addr: int,\
+                 firmware_version: str, lut_version: str):
+        self.panel_width      = panel_width
+        self.panel_height     = panel_height
+        self.img_buff_addr    = img_buff_addr
+        self.firmware_version = firmware_version
+        self.lut_version      = lut_version
+    
+    @classmethod
+    def from_u16_words(cls, u16_words: list):
+        if len(u16_words)*2 != DeviceInfo.Size:
+            raise "Input must have 20 elements (40 bytes)"
 
+        width            = u16_words[0]
+        height           = u16_words[1]
+        img_buff_addr    = (u16_words[2] << 16) | u16_words[3]
+        firmware_version = ''.join(chr(word & 0xFF) + chr((word >> 8) & 0xFF)\
+                                   for word in u16_words[4:11])
+        lut_version      = ''.join(chr(word & 0xFF) + chr((word >> 8) & 0xFF)\
+                                   for word in u16_words[12:19])
+
+        return cls(
+            width,
+            height,
+            img_buff_addr,
+            firmware_version,
+            lut_version
+        )
+
+    def __str__(self):
+        return f"Panel width: {self.panel_width}\n" + \
+               f"Panel height: {self.panel_height}\n" + \
+               f"Image buffer address: {hex(self.img_buff_addr)}\n" + \
+               f"Firmware version: {self.firmware_version}\n" + \
+               f"LUT version: {self.lut_version}"
+    
 def u16_list_to_be_bytearray(data: list) -> bytearray:
     """
     This is a helper function to convert a u16 list to a big-endian byte array
@@ -176,6 +216,9 @@ class it8951:
         # Host-ready pin (toggled by the IT8951)
         self._hrdy = hrdy
     
+        self.device_info = self.get_device_info()
+        print(self.device_info)
+    
     # TODO: Add this in based on the example project
     def _wait_ready(self):
         while self._hrdy.value() == 0: pass
@@ -193,6 +236,11 @@ class it8951:
             self._spi.write(txdata)
         finally:
             self._ncs(1)
+            
+    def send_command_args(self, command: Command, args: list):
+        self.send_command(command)
+        txdata = u16_list_to_be_bytearray(args)
+        self.write_data(txdata)
     
     def write_data(self, data: list):
         """
@@ -225,7 +273,11 @@ class it8951:
             rxdata = bytearray(len(txdata))
             self._wait_ready()
             self._ncs(0)
-            self._spi.write_readinto(txdata, rxdata)
+
+            for i in range(len(txdata)):
+                self._wait_ready()
+                rxdata[i:i+1] = self._spi.read(1, txdata[i])
+
             # Take off the first 4 bytes (preampble and dummy words)
             rxdata = rxdata[4:]
             return be_bytearray_to_u16_list(rxdata)
@@ -253,3 +305,66 @@ class it8951:
         self.send_command(Command.REG_RD)
         self.write_data(reg.to_bytes(2, 'big'))
         return self.read_data(length)
+    
+    def sleep(self):
+        self.send_command(Command.SLEEP)
+        
+    def standby(self):
+        self.send_command(Command.STANDBY)
+        
+    def SystemRun(self):
+        self.send_command(Command.SYS_RUN)
+    
+    def get_vcom(self) -> int:
+        self.send_command_args(Command.CMD_VCOM, [0])
+        rxdata = self._spi.read(2)
+        return (rxdata[0] << 8) | rxdata[1]
+
+    def set_vcom(self, vcom_mV, store_to_flash: bool = False):
+        arg = 2 if store_to_flash else 1
+        self.send_command_args(Command.CMD_VCOM, [arg, vcom_mV])
+    
+    def set_power(self, enable: bool):
+        self.send_command_args(Command.POWER_SEQUENCE, [enable])
+        
+    def get_device_info(self) -> DeviceInfo:
+        self.send_command(Command.GET_DEV_INFO)
+        rxdata = self.read_data(int(DeviceInfo.Size/2))
+        return DeviceInfo.from_u16_words(rxdata)
+    
+    def fill_rect(self, x: int, y: int, width: int, height: int, pix: int):
+        # TODO: Add checks for width, height, and pix (0-255)
+        self.send_command_args(Command.FILL_RECT, [x, y, width, height, pix])
+        
+    def force_set_temperature(self, temperature_C: int):
+        """
+        Fixes the IT8951's temperature sensor readings to the specified 
+        temperature in C
+        """
+        self.send_command_args(Command.CMD_TEMPERATURE, [1, temperature_C])
+
+    def get_temperature(self) -> (int, int):
+        """
+        Gets the real (0th) and forced (1st) temperature sensor reading from the
+        IT8951. If the temperature value isn't fixed (forced), the 2nd touple 
+        element is meaningless
+        """
+        self.send_command_args(Command.CMD_TEMPERATURE, [0])
+        rxdata = self._spi.read(4)
+        # TODO: The datasheet is ambiguous on the order of the real and forced T
+        return ((rxdata[0] << 8) | rxdata[1], (rxdata[2] << 8) | rxdata[3])
+    
+    def cancel_force_temperature(self):
+        """
+        After a forced (fixed) temperature settings this command ensures that
+        the IT8951 continues to read the real temperature sensor.
+        """
+        self.send_command_args(Command.CMD_TEMPERATURE, [2])
+    
+    def set_bpp_mode(self, is_2bpp: bool):
+        """
+        This command was designed for 2 bpp image display. Without this command,
+        2bpp cannot show correct white pixel. Host should call this command
+        before display 2bpp image
+        """
+        self.send_command_args(Command.BPP_SETTINGS, [is_2bpp])
