@@ -1,6 +1,4 @@
 import sys
-# TODO: Remove as not compatible with uP
-from array import array
 if sys.platform == "esp32":
     import pros3
     from machine import Pin, SPI
