@@ -230,8 +230,6 @@ class it8951:
         self._send_command(command)
         self._write_data(args)
 
-    # TODO: The reading of the VCOM is not working. It also messes up subsequent
-    #       reads
     def _read_data(self, length: int) -> list:
         """
         Reads the specified number of 16bit words from the IT8951.
@@ -289,8 +287,7 @@ class it8951:
     
     def get_vcom(self) -> int:
         self._send_command_args(Command.CMD_VCOM, [0])
-        rxdata = self._spi.read(2)
-        return (rxdata[0] << 8) | rxdata[1]
+        return self._read_data(1)[0]
 
     def set_vcom(self, vcom_mV, store_to_flash: bool = False):
         arg = 2 if store_to_flash else 1
