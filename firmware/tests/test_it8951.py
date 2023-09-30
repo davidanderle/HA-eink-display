@@ -44,8 +44,8 @@ class test_it8951(unittest.TestCase):
     ])
     def test_read_data(self, len, expected_words, expected_tx):
         expected_bytes = b''.join(struct.pack('>H', word) for word in [0, 0] + expected_words)
-        def spi_read(nbytes: int, txdata: bytearray) -> bytearray:
-            self.txed_bytes.extend(txdata)
+        def spi_read(nbytes: int, txdata: int) -> bytearray:
+            self.txed_bytes.extend([txdata])
             ret = expected_bytes[self.rxcounter:self.rxcounter+2]
             self.rxcounter += nbytes
             return ret
