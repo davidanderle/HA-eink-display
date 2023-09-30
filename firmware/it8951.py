@@ -230,7 +230,6 @@ class it8951:
         self._send_command(command)
         self._write_data(args)
 
-    # TODO: Fix this using the tests
     # TODO: The reading of the VCOM is not working. It also messes up subsequent
     #       reads
     def _read_data(self, length: int) -> list:
@@ -248,8 +247,9 @@ class it8951:
             self._wait_ready()
             self._ncs(0)
             for i in range(len(txdata)):
+                tx = txdata[i].to_bytes(2, 'big')
                 self._wait_ready()
-                rx = self._spi.read(2, txdata[i].to_bytes(2, 'big'))
+                rx = self._spi.read(1, tx[0]) + self._spi.read(1, tx[1])
                 rxdata.append((rx[0] << 8) | rx[1])
 
             # Take off the first 2 words (preampble and dummy words)
