@@ -16,8 +16,8 @@ The embedded UI design is likely to be through
 - Compile the uPython code to .mpy using `mpy-cross` to accelerate execution and occupy less flash
 - investigate webrepl https://micropython.org/webrepl/ to update files over-the-air
 
-I could not make serial communication work from WSL2 on my laptop, therefore I am using a slightly more convoluted way to communicate with the board.
-My setup is in VSCode + PowerShell terminal.
+# Hellow, world!
+I could not make serial communication work from WSL2 on my laptop, therefore I am using VSCode + PowerShell terminal.
 1. Download the latest [esptool](https://github.com/espressif/esptool/releases/tag/v4.6.2) to program the ESP32-S3 through its ROM bootloader
 2. Download the latest [micropython .bin](https://micropython.org/download/UM_PROS3/)
 3. Put the ProS3 in download mode:
@@ -35,14 +35,9 @@ esptool --chip esp32s3 --port COMx write_flash -z 0x0 micropython_v1.20.0.bin
 py -m pip install mpremote
 py -m mpremote version
 ```
-7. Copy over the [pros3.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/pros3.py) helper library and the [example.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/example.py) files
+7. Copy over the [pros3.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/pros3.py) helper library and the [example.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/example.py) files and run the example code
 ```
-py -m mpremote cp pros3.py :pros3.py
-py -m mpremote cp example.py :example.py
-```
-8. Run the code and you should see:
-```
-PS C:\mypath> py -m mpremote run example.py    
+py -m mpremote cp pros3.py :pros3.py + example.py :example.py + run example.py
 
 Hello from ProS3!
 ------------------
@@ -59,8 +54,6 @@ Free: 14659584 Bytes
 Pixel Time!
 ```
 
-To open a REPL terminal communication with the ProS3 `py -m mpremote`
-
 # Test setup
 1. Ensure that pip is in the PATH:
 ```
@@ -70,18 +63,28 @@ $Env:Path += ';C:\<path-to-pythonXXX>\Scripts'
 ```
 pip install parameterized
 ```
-3. Run unit tests:
+3. Configure VSCode's Test Explorer:
+Create (or add to) your .vscode/settings.json and paste these data/value pairs:
 ```
-py -m unittest discover -s tests
+{
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./firmware/tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
+}
 ```
+If done correctly, this is what you should roughly see when pressing the conical flash button on the LHS of VSCode's primary side bar:
+![image](https://github.com/davidanderle/eink_calendar/assets/17354704/4780c91f-caff-4769-8716-3f894de77eec)
 
 # Hardware setup
-1. Set the dip-switches into a 0b001 position (sw0 at ON position) to enable the SPI Slave communication
+1. Set the dip-switches into a 0b001 position (sw3 at ON position) to enable the SPI Slave communication. This is counter-intuitive as sw1 should've been bit0...
 
 # Required packages
-```
-py -m mpremote mip install --no-mpy unittest
-```
 
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
