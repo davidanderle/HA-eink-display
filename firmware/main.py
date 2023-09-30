@@ -5,24 +5,17 @@ from it8951 import it8951, Command, Register
 from epd import epd
 
 # Note: MicroPyhon does not support array objects well..
-# Note: as it, it runs on Windows and MP as well! 10/09/2023
-
+# Note: This code runs on Windows and MP as well 10/09/2023
 # The display can create images at 4bpp
 # The display's full average update should take about 26.5mW
+# The EPD waveform file should be stored in SPI flash
 
-# The EPS waveform file should be stored in SPI flash
-
-spi = SPI(1, 24_000_000, sck=Pin(pros3.SPI_CLK), mosi=Pin(pros3.SPI_MOSI), miso=Pin(pros3.SPI_MISO), firstbit=SPI.MSB, polarity=0, phase=0, bits=8)
-ncs = Pin(34, Pin.OUT, value=1)
+spi  = SPI(1, 24_000_000, sck=Pin(pros3.SPI_CLK), mosi=Pin(pros3.SPI_MOSI), miso=Pin(pros3.SPI_MISO), firstbit=SPI.MSB, polarity=0, phase=0, bits=8)
+ncs  = Pin(34, Pin.OUT, value=1)
 hrdy = Pin(9, Pin.IN, Pin.PULL_UP)
 tcon = it8951(spi, ncs, hrdy)
-epd = epd(tcon, 1872, 1404, -1580)
-#tcon.write_data([0x1234])
-#tcon.read_data(2)
-#tcon.send_command(Command.SET_VCOM)
-#tcon.write_reg(Register.MCSR, [0x1234])
-#mcsr = tcon.read_reg(Register.MCSR, 1)
-#print(mcsr)
+
+epd_ctrl = epd(tcon, 1872, 1404, -1580)
 
 #def do_connect():
 #    import network
