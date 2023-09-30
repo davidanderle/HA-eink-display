@@ -2,6 +2,7 @@ from machine import SPI, Pin
 from array import array
 import pros3
 from it8951 import it8951, Command, Register
+from epd import epd
 
 # Note: MicroPyhon does not support array objects well..
 # Note: as it, it runs on Windows and MP as well! 10/09/2023
@@ -11,13 +12,11 @@ from it8951 import it8951, Command, Register
 
 # The EPS waveform file should be stored in SPI flash
 
-# TODO: The channel id may not be 1
-# TODO: 16bit frame-size may work as well
-spi = SPI(2, 24_000_000, sck=Pin(pros3.SPI_CLK), mosi=Pin(pros3.SPI_MOSI), miso=Pin(pros3.SPI_MISO), firstbit=SPI.MSB, polarity=0, phase=0, bits=8)
+spi = SPI(1, 24_000_000, sck=Pin(pros3.SPI_CLK), mosi=Pin(pros3.SPI_MOSI), miso=Pin(pros3.SPI_MISO), firstbit=SPI.MSB, polarity=0, phase=0, bits=8)
 ncs = Pin(34, Pin.OUT, value=1)
 hrdy = Pin(9, Pin.IN, Pin.PULL_UP)
 tcon = it8951(spi, ncs, hrdy)
-device_info = tcon.get_device_info()
+epd = epd(tcon, 1872, 1404, -1580)
 #tcon.write_data([0x1234])
 #tcon.read_data(2)
 #tcon.send_command(Command.SET_VCOM)
