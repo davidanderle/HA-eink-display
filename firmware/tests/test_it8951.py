@@ -17,7 +17,7 @@ class test_it8951(unittest.TestCase):
         (Command.CMD_VCOM,     [0x60, 0x00, 0x00, 0x39]),
         (Command.GET_DEV_INFO, [0x60, 0x00, 0x03, 0x02]),
     ])
-    def test_send_command(self, command, expected_bytes):
+    def test_send_command(self, command: Command, expected_bytes: list):
         tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
         self.assertEqual(self.ncs, 1)
         tcon._send_command(command)
@@ -30,7 +30,7 @@ class test_it8951(unittest.TestCase):
         ([0xFFFF],                 [0x00, 0x00, 0xFF, 0xFF]),
         ([],                       [])
     ])
-    def test_write_data(self, data, expected_bytes):
+    def test_write_data(self, data: list, expected_bytes: list):
         tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
         self.assertEqual(self.ncs, 1)
         tcon._write_data(data)
@@ -42,7 +42,7 @@ class test_it8951(unittest.TestCase):
         (1, [0x1234],                         [0x10,0,0,0,0,0]),
         (4, [0x0000, 0x7FFF, 0x8000, 0xFFFF], [0x10,0,0,0,0,0,0,0,0,0,0,0])
     ])
-    def test_read_data(self, len, expected_words, expected_tx):
+    def test_read_data(self, len: int, expected_words: list, expected_tx: list):
         expected_bytes = b''.join(struct.pack('>H', word) for word in [0, 0] + expected_words)
         def spi_read(nbytes: int, txdata: int) -> bytearray:
             self.txed_bytes.extend([txdata])
