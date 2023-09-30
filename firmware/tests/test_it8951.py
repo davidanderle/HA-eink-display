@@ -57,6 +57,22 @@ class test_it8951(unittest.TestCase):
         self.assertEqual(self.ncs, 1)
         self.assertEqual(rxed_words, expected_words)
         self.assertEqual(self.txed_bytes, expected_tx)
+
+    @parameterized.expand([
+        (-1580, False, [0x60, 0x00, 0x00, 0x39, 0x00, 0x00, 0x00, 0x01, 0x06, 0x2C]),
+        (-1580, True,  [0x60, 0x00, 0x00, 0x39, 0x00, 0x00, 0x00, 0x02, 0x06, 0x2C]),
+        (1800,  False, []),
+        (0,     False, [])
+    ])
+    def test_set_vcom(self, vcom_mV: int, write_to_flash: bool, expected_tx: list):
+        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
+        self.assertEqual(self.ncs, 1)
+        if vcom_mV >= 0:
+            with self.assertRaises(Exception): tcon.set_vcom(vcom_mV, write_to_flash)
+        else:
+            tcon.set_vcom(vcom_mV, write_to_flash)
+        self.assertEqual(self.ncs, 1)
+        self.assertEqual(self.txed_bytes, expected_tx)
     
     # This method is called before any tests are run 
     @classmethod
