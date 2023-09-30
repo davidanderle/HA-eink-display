@@ -37,7 +37,7 @@ py -m mpremote version
 ```
 7. Copy over the [pros3.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/pros3.py) helper library and the [example.py](https://github.com/UnexpectedMaker/esp32s3/blob/main/code/micropython/helper%20libraries/pros3/example.py) files and run the example code
 ```
-py -m mpremote cp pros3.py :pros3.py + example.py :example.py + run example.py
+py -m mpremote cp pros3.py :pros3.py + cp example.py :example.py + run example.py
 
 Hello from ProS3!
 ------------------
