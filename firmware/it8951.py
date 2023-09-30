@@ -168,37 +168,6 @@ class DeviceInfo:
                f"Image buffer address: {hex(self.img_buff_addr)}\n" + \
                f"Firmware version: {self.firmware_version}\n" + \
                f"LUT version: {self.lut_version}"
-    
-def u16_list_to_be_bytearray(data: list) -> bytearray:
-    """
-    This is a helper function to convert a u16 list to a big-endian byte array
-    Args:
-        data: u16 list to convert
-    Raises:
-        TypeError exception if any of the element in the list is greater than 65535
-    Returns: Big-endian byte array representation of the input data
-    """
-    txdata = bytearray()
-    for d in data:
-        if d > 65535: raise TypeError("Invalid type. List must contain u16 elements!")
-        txdata.extend(d.to_bytes(2, 'big'))
-    return txdata
-    
-def be_bytearray_to_u16_list(data: bytearray) -> list:
-    """
-    This is a helper function to convert a big-endian byte array to a u16 list
-    Args:
-        data: byte array to convert. Must have even number of elements.
-    Raises:
-        IndexError exception is thrown if there are odd number of elements in the array
-    Returns:
-        u16 list representation of the input data
-    """
-    if len(data)%2 != 0: raise IndexError("Byte array must have even number of elements")
-    u16_data = []
-    for i in range(0, len(data), 2):
-        u16_data.append((data[i] << 8) | data[i+1])
-    return u16_data
 
 # For the SPI protocol description, refer to 
 # https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
@@ -216,33 +185,30 @@ class it8951:
         # Host-ready pin (toggled by the IT8951)
         self._hrdy = hrdy
     
-        self.device_info = self.get_device_info()
-        print(self.device_info)
-    
-    # TODO: Add this in based on the example project
     def _wait_ready(self):
+        """
+        The host must wait for the HRDY pin to be high before Tx/Rx of the next 
+        2x8 bits.
+        """
         while self._hrdy.value() == 0: pass
 
-    def send_command(self, command: Command):
+    def _send_command(self, command: Command):
         """
         Sends a command to the IT8951.
         Args:
             command: Command to execute
         """
         try:
-            txdata = ((SpiPreamble.COMMAND << 16) | command).to_bytes(4, 'big')
+            txdata = [SpiPreamble.COMMAND, command]
             self._wait_ready()
             self._ncs(0)
-            self._spi.write(txdata)
+            for i in range(len(txdata)):
+                self._wait_ready()
+                self._spi.write(txdata[i].to_bytes(2, 'big'))
         finally:
             self._ncs(1)
-            
-    def send_command_args(self, command: Command, args: list):
-        self.send_command(command)
-        txdata = u16_list_to_be_bytearray(args)
-        self.write_data(txdata)
     
-    def write_data(self, data: list):
+    def _write_data(self, data: list):
         """
         Writes u16 words to the IT8951.
         Args: 
@@ -251,16 +217,23 @@ class it8951:
         if not data: return
 
         try:
-            # Convert to big-endian format (MSByte first)
-            txdata = SpiPreamble.WRITE_DATA.to_bytes(2, 'big') \
-                     + u16_list_to_be_bytearray(data)
+            txdata = [SpiPreamble.WRITE_DATA] + data
             self._wait_ready()
             self._ncs(0)
-            self._spi.write(txdata)
+            for i in range(len(txdata)):
+                self._wait_ready()
+                self._spi.write(txdata[i].to_bytes(2, 'big'))
         finally:
             self._ncs(1)
 
-    def read_data(self, length: int) -> list:
+    def _send_command_args(self, command: Command, args: list):
+        self._send_command(command)
+        self._write_data(args)
+
+    # TODO: Fix this using the tests
+    # TODO: The reading of the VCOM is not working. It also messes up subsequent
+    #       reads
+    def _read_data(self, length: int) -> list:
         """
         Reads the specified number of 16bit words from the IT8951.
         Args:
@@ -269,79 +242,78 @@ class it8951:
         if length == 0: return []
         try:
             # The first word returned from the controller is dummy:u16
-            txdata = SpiPreamble.READ_DATA.to_bytes(2, 'big') + bytearray(length*2+2)
-            rxdata = bytearray(len(txdata))
+            txdata = [SpiPreamble.READ_DATA] + [0]*(length+1)
+            rxdata = []
+
             self._wait_ready()
             self._ncs(0)
-
             for i in range(len(txdata)):
                 self._wait_ready()
-                rxdata[i:i+1] = self._spi.read(1, txdata[i])
+                rx = self._spi.read(2, txdata[i].to_bytes(2, 'big'))
+                rxdata.append((rx[0] << 8) | rx[1])
 
-            # Take off the first 4 bytes (preampble and dummy words)
-            rxdata = rxdata[4:]
-            return be_bytearray_to_u16_list(rxdata)
+            # Take off the first 2 words (preampble and dummy words)
+            return rxdata[2:]
         finally:
             self._ncs(1)
             
-    def write_reg(self, reg: Register, data: list):
+    def _write_reg(self, reg: Register, data: list):
         """
         Writes the specified number of words to a register
         Args:
             reg: Register to write to
             data: u16 words to write to reg
         """
-        self.send_command(Command.REG_WR)
-        txdata = reg.to_bytes(2, 'big') + u16_list_to_be_bytearray(data)
-        self.write_data(txdata)
+        self._send_command(Command.REG_WR)
+        self._write_data([reg, data])
     
-    def read_reg(self, reg: Register, length: int) -> list:
+    def _read_reg(self, reg: Register, length: int) -> list:
         """
         Reads the specified number of words from a register
         Args:
             reg: Register to write to
             data: u16 words to write to reg
         """
-        self.send_command(Command.REG_RD)
-        self.write_data(reg.to_bytes(2, 'big'))
-        return self.read_data(length)
+        self._send_command(Command.REG_RD)
+        self._write_data(reg)
+        return self._read_data(length)
     
     def sleep(self):
-        self.send_command(Command.SLEEP)
+        self._send_command(Command.SLEEP)
         
     def standby(self):
-        self.send_command(Command.STANDBY)
+        self._send_command(Command.STANDBY)
         
-    def SystemRun(self):
-        self.send_command(Command.SYS_RUN)
+    def system_run(self):
+        self._send_command(Command.SYS_RUN)
     
     def get_vcom(self) -> int:
-        self.send_command_args(Command.CMD_VCOM, [0])
+        self._send_command_args(Command.CMD_VCOM, [0])
         rxdata = self._spi.read(2)
         return (rxdata[0] << 8) | rxdata[1]
 
     def set_vcom(self, vcom_mV, store_to_flash: bool = False):
         arg = 2 if store_to_flash else 1
-        self.send_command_args(Command.CMD_VCOM, [arg, vcom_mV])
+        self._send_command_args(Command.CMD_VCOM, [arg, vcom_mV])
     
     def set_power(self, enable: bool):
-        self.send_command_args(Command.POWER_SEQUENCE, [enable])
+        self._send_command_args(Command.POWER_SEQUENCE, [enable])
         
     def get_device_info(self) -> DeviceInfo:
-        self.send_command(Command.GET_DEV_INFO)
-        rxdata = self.read_data(int(DeviceInfo.Size/2))
+        self._send_command(Command.GET_DEV_INFO)
+        rxdata = self._read_data(int(DeviceInfo.Size/2))
         return DeviceInfo.from_u16_words(rxdata)
     
     def fill_rect(self, x: int, y: int, width: int, height: int, pix: int):
         # TODO: Add checks for width, height, and pix (0-255)
-        self.send_command_args(Command.FILL_RECT, [x, y, width, height, pix])
+        self._send_command_args(Command.FILL_RECT, [x, y, width, height, pix])
         
     def force_set_temperature(self, temperature_C: int):
         """
         Fixes the IT8951's temperature sensor readings to the specified 
         temperature in C
         """
-        self.send_command_args(Command.CMD_TEMPERATURE, [1, temperature_C])
+        self._send_command_args(Command.CMD_TEMPERATURE, [1, temperature_C])
 
     def get_temperature(self) -> (int, int):
         """
@@ -349,7 +321,7 @@ class it8951:
         IT8951. If the temperature value isn't fixed (forced), the 2nd touple 
         element is meaningless
         """
-        self.send_command_args(Command.CMD_TEMPERATURE, [0])
+        self._send_command_args(Command.CMD_TEMPERATURE, [0])
         rxdata = self._spi.read(4)
         # TODO: The datasheet is ambiguous on the order of the real and forced T
         return ((rxdata[0] << 8) | rxdata[1], (rxdata[2] << 8) | rxdata[3])
@@ -359,7 +331,7 @@ class it8951:
         After a forced (fixed) temperature settings this command ensures that
         the IT8951 continues to read the real temperature sensor.
         """
-        self.send_command_args(Command.CMD_TEMPERATURE, [2])
+        self._send_command_args(Command.CMD_TEMPERATURE, [2])
     
     def set_bpp_mode(self, is_2bpp: bool):
         """
@@ -367,4 +339,4 @@ class it8951:
         2bpp cannot show correct white pixel. Host should call this command
         before display 2bpp image
         """
-        self.send_command_args(Command.BPP_SETTINGS, [is_2bpp])
+        self._send_command_args(Command.BPP_SETTINGS, [is_2bpp])
