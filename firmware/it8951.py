@@ -284,12 +284,24 @@ class it8951:
         self._send_command(Command.SYS_RUN)
     
     def get_vcom(self) -> int:
+        """
+        Reads the VCOM value from the IT8951 in mV. Note that this should always
+        be a negative value
+        """
         self._send_command_args(Command.CMD_VCOM, [0])
-        return self._read_data(1)[0]
+        return -self._read_data(1)[0]
 
-    def set_vcom(self, vcom_mV, store_to_flash: bool = False):
+    def set_vcom(self, vcom_mV: int, store_to_flash: bool = False):
+        """
+        Sets the VCOM value on the IT8951.
+        Args:
+            vcom_mV: VCOM value in mV. Must be negative!
+            store_to_flash: True stores the vcom_mV value in NVM. False by default
+        """
+        if vcom_mV >= 0: raise Exception("VCOM must be negative")
         arg = 2 if store_to_flash else 1
-        self._send_command_args(Command.CMD_VCOM, [arg, vcom_mV])
+        # VCOM must be written as -1.58 = 1580 = 0x62C -> [0x06, 0x2C]
+        self._send_command_args(Command.CMD_VCOM, [arg, abs(vcom_mV)])
     
     def set_power(self, enable: bool):
         self._send_command_args(Command.POWER_SEQUENCE, [enable])
@@ -310,16 +322,15 @@ class it8951:
         """
         self._send_command_args(Command.CMD_TEMPERATURE, [1, temperature_C])
 
-    def get_temperature(self) -> (int, int):
+    def get_temperature(self) -> list:
         """
         Gets the real (0th) and forced (1st) temperature sensor reading from the
         IT8951. If the temperature value isn't fixed (forced), the 2nd touple 
         element is meaningless
         """
         self._send_command_args(Command.CMD_TEMPERATURE, [0])
-        rxdata = self._spi.read(4)
         # TODO: The datasheet is ambiguous on the order of the real and forced T
-        return ((rxdata[0] << 8) | rxdata[1], (rxdata[2] << 8) | rxdata[3])
+        return self._read_data(2)
     
     def cancel_force_temperature(self):
         """
