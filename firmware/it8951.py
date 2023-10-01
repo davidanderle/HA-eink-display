@@ -1,15 +1,13 @@
 import sys
+# TODO: This creates a dependency forthe ESP32 platform
 if sys.platform == "esp32":
     import pros3
     from machine import Pin, SPI
 if sys.platform == "win32":
     from unittest.mock import Mock
-    class SPI:
-        pass
-    class Pin:
-        pass
+    class SPI: pass
+    class Pin: pass
 
-# IT8951 memory map
 class RegisterBase:
     USB         = 0x4E00
     I2C         = 0x4C00
@@ -25,7 +23,7 @@ class RegisterBase:
     MEMORY_CONV = 0x0200
     SYSTEM      = 0x0000
     
-# IT8951 register memory map (incomplete)
+# IT8951 register memory map
 class Register:
     # Engine width/height register
     LUT0EWHR  = RegisterBase.DISP_CTRL + 0x000
@@ -116,10 +114,14 @@ class RotateMode:
     ROTATE_90  = 1
     ROTATE_180 = 2
     ROTATE_270 = 3
+
+class Endianness:
+    LITTLE = 0
+    BIG    = 1
     
 # Waveform display modes are described here:
 # http://www.waveshare.net/w/upload/c/c4/E-paper-mode-declaration.pdf
-class DisplayModes:
+class DisplayMode:
     INIT  = 0
     DU    = 1
     GC16  = 2
@@ -167,11 +169,41 @@ class DeviceInfo:
                f"Firmware version: {self.firmware_version}\n" + \
                f"LUT version: {self.lut_version}"
 
+class Rectangle:
+    def __init__(self, x: int, y: int, w: int, h: int):
+        self.x      = x
+        self.y      = y
+        self.width  = w
+        self.height = h
+
+    def area(self) -> int:
+        return self.width*self.height
+        
+    def to_list(self) -> list:
+        return [self.x, self.y, self.width, self.height]
+    
+    def is_contained_within(self, rect: 'Rectangle') -> bool:
+        return (
+            self.x >= rect.x and
+            self.y >= rect.y and
+            self.x + self.width <= rect.x + rect.width and
+            self.y + self.height <= rect.x + rect.height
+        )
+
+class ImageInfo:
+    def __init__(self, endian: Endianness, bpp: ColorDepth, rotation: RotateMode):
+        self.endianness = endian
+        self.bpp        = bpp
+        self.rotation   = rotation
+
+    def pack_to_u16(self):
+        return (self.endianness << 8) | (self.bpp << 4) | self.rotation
+
 # For the SPI protocol description, refer to 
 # https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
 # https://v4.cecdn.yun300.cn/100001_1909185148/IT8951_I80+ProgrammingGuide_16bits_20170904_v2.7_common_CXDX.pdf
 class it8951:
-    def __init__(self, spi: SPI, ncs: Pin, hrdy: Pin):
+    def __init__(self, spi: SPI, ncs: Pin, hrdy: Pin, vcom_mV: int):
         # There are 2 hardware SPI channels on the ESP32 and they can be mapped
         # to any pin, however, they are limited to 40MHz if not used on the 
         # default ones. The IT8951's maximum SPI speed is 24MHz either way, so 
@@ -182,6 +214,24 @@ class it8951:
         self._ncs = ncs
         # Host-ready pin (toggled by the IT8951)
         self._hrdy = hrdy
+
+        if sys.platform != "win32":
+            print("Initialising IT8951...")
+            self.device_info = self.get_device_info()
+
+            if self.device_info.panel_height == 0 or self.device_info.panel_width == 0:
+                raise Exception("Failed to establish communication with the IT8951")
+
+            print(self.device_info)
+            self.panel_area = Rectangle(0, 0, self.device_info.panel_width, self.device_info.panel_height)
+
+            rxvcom_mV = self.get_vcom()
+            print(f"Current VCOM = {rxvcom_mV/1000}")
+
+            if vcom_mV != rxvcom_mV:
+                print(f"Settig VCOM to the new value: {vcom_mV/1000}... ", end='')
+                self.set_vcom(vcom_mV)
+                print("Success" if self.get_vcom() == vcom_mV else "Failed")
     
     def _wait_ready(self):
         """
@@ -210,9 +260,12 @@ class it8951:
         """
         Writes u16 words to the IT8951.
         Args: 
-            data: A list of u16 elements containing the data to be written
+            data: A list of u16 elements containing the data to be written. Max
+                  transfer size is 1024 words.
         """
         if not data: return
+        if len(data) > 1024:
+            raise ValueError("Max transfer size if 1024 words")
 
         try:
             txdata = [SpiPreamble.WRITE_DATA] + data
@@ -232,9 +285,11 @@ class it8951:
         """
         Reads the specified number of 16bit words from the IT8951.
         Args:
-            length: number of u16 elements to read
+            length: number of u16 elements to read. Max is 1024 words.
         """
         if length == 0: return []
+        if length > 1024:
+            raise ValueError("Maximum trasfer size is 1024")
         try:
             # The first word returned from the controller is dummy:u16
             txdata = [SpiPreamble.READ_DATA] + [0]*(length+1)
@@ -273,6 +328,12 @@ class it8951:
         self._send_command(Command.REG_RD)
         self._write_data(reg)
         return self._read_data(length)
+
+    def _wait_for_display_ready(self): 
+        """
+        Waits for the LUT engine to finish
+        """
+        while self._read_reg(Register.LUTAFSR) != 0: pass
     
     def sleep(self):
         self._send_command(Command.SLEEP)
@@ -311,9 +372,20 @@ class it8951:
         rxdata = self._read_data(int(DeviceInfo.Size/2))
         return DeviceInfo.from_u16_words(rxdata)
     
-    def fill_rect(self, x: int, y: int, width: int, height: int, pix: int):
-        # TODO: Add checks for width, height, and pix (0-255)
-        self._send_command_args(Command.FILL_RECT, [x, y, width, height, pix])
+    def fill_rect(self, rect: Rectangle, colour: int):
+        """
+        Fills the specified rectangle with a uniform color. The rectangle must
+        be within the display's area and the pixel bit depth must not be more
+        than 8bpp
+        Args: 
+            rect: Rectangle to colour uniformly
+            colour: Colour to fill the rectangle with
+        """
+        if not rect.is_contained_within(self.panel_area):
+            raise ValueError("Area outside the display's limits")
+        if colour > 255:
+            raise ValueError("Invalid colour for the max allowed pixel depth")
+        self._send_command_args(Command.FILL_RECT, rect.to_list().append(colour))
         
     def force_set_temperature(self, temperature_C: int):
         """
@@ -346,3 +418,45 @@ class it8951:
         before display 2bpp image
         """
         self._send_command_args(Command.BPP_SETTINGS, [is_2bpp])
+
+    def _load_img_area_start(self, img_info: ImageInfo, rect: Rectangle):
+        args = [img_info.pack_to_u16()].append(rect.to_list())
+        self._send_command_args(Command.LD_IMG_AREA, args)
+
+    def _load_img_end(self):
+        self._send_command(Command.LD_IMG_END)
+
+    def set_img_buff_base_address(self, base_address: int):
+        addr_h = (base_address >> 16) & 0xFFFF
+        addr_l = (base_address      ) & 0xFFFF
+        # TODO: This may need 2 different reg writes
+        self._write_reg(Register.LISAR, [addr_l, addr_h])
+
+    def pixel_write(self, img_info: ImageInfo, rect: Rectangle, colour: list):
+        """
+        Writes the specified pixels to the IT8951's inernal frame buffer but
+        does not render the image on the screen. Call display_area after writing
+        the pixels to display on the EPD
+        Args:
+            rect: Rectangle to colour with the specified pixels. The area of the
+                  rectangle must match the number of pixels in the colour list
+            colour: List of colours to write to the area defined by 'rect'
+        """
+        if rect.area != len(colour): 
+            raise Exception("Numbr of pixels in the rectangle must match the pixel count")
+        if not rect.is_contained_within(self.panel_area):
+            raise ValueError("Area outside the display's limits")
+        if any(c > 255 for c in colour):
+            raise ValueError("Invalid colour for the max allowed pixel depth")
+
+        self._wait_for_display_ready()
+        self._load_img_area_start(img_info, rect)
+        self._write_data(colour)
+        self._load_img_end()
+    
+    def display_area(self, rect: Rectangle, display_mode: DisplayMode):
+        """
+        Displays the pixels loaded to the frame buffer to the specified area
+        """
+        self._send_command(Command.DPY_AREA)
+        self._write_data(rect.to_list().append(display_mode))
