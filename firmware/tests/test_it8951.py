@@ -18,7 +18,7 @@ class test_it8951(unittest.TestCase):
         (Command.GET_DEV_INFO, [0x60, 0x00, 0x03, 0x02]),
     ])
     def test_send_command(self, command: Command, expected_bytes: list):
-        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
+        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy, -1580)
         self.assertEqual(self.ncs, 1)
         tcon._send_command(command)
         self.assertEqual(self.ncs, 1)
@@ -31,7 +31,7 @@ class test_it8951(unittest.TestCase):
         ([],                       [])
     ])
     def test_write_data(self, data: list, expected_bytes: list):
-        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
+        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy, -1580)
         self.assertEqual(self.ncs, 1)
         tcon._write_data(data)
         self.assertEqual(self.ncs, 1)
@@ -51,7 +51,7 @@ class test_it8951(unittest.TestCase):
             return ret
 
         self.mock_spi.read = spi_read
-        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
+        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy, -1580)
         self.assertEqual(self.ncs, 1)
         rxed_words = tcon._read_data(len)
         self.assertEqual(self.ncs, 1)
@@ -65,7 +65,7 @@ class test_it8951(unittest.TestCase):
         (0,     False, [])
     ])
     def test_set_vcom(self, vcom_mV: int, write_to_flash: bool, expected_tx: list):
-        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy)
+        tcon = it8951(self.mock_spi, self.mock_ncs, self.mock_hrdy, -1580)
         self.assertEqual(self.ncs, 1)
         if vcom_mV >= 0:
             with self.assertRaises(Exception): tcon.set_vcom(vcom_mV, write_to_flash)
