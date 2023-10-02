@@ -320,19 +320,17 @@ class it8951:
             reg: Register to write to
             data: u16 words to write to reg
         """
-        self._send_command(Command.REG_WR)
-        self._write_data([reg, data])
+        self._send_command_args(Command.REG_WR, [reg] + data)
     
-    def _read_reg(self, reg: Register, length: int) -> list:
+    def _read_reg(self, reg: Register, count: int) -> list:
         """
         Reads the specified number of words from a register
         Args:
             reg: Register to write to
-            data: u16 words to write to reg
+            count: Number of registers to read from the specified register
         """
-        self._send_command(Command.REG_RD)
-        self._write_data(reg)
-        return self._read_data(length)
+        self._send_command_args(Command.REG_RD, [reg])
+        return self._read_data(count)
 
     def _wait_for_display_ready(self): 
         """
@@ -463,5 +461,4 @@ class it8951:
         """
         Displays the pixels loaded to the frame buffer to the specified area
         """
-        self._send_command(Command.DPY_AREA)
-        self._write_data(rect.to_list().append(display_mode))
+        self._send_command_args(Command.DPY_AREA, rect.to_list() + [display_mode])
