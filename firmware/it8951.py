@@ -445,7 +445,7 @@ class it8951:
                   rectangle must match the number of pixels in the colour list
             colour: List of colours to write to the area defined by 'rect'
         """
-        if rect.area != len(colour): 
+        if rect.area() != len(colour): 
             raise Exception("Numbr of pixels in the rectangle must match the pixel count")
         if not rect.is_contained_within(self.panel_area):
             raise ValueError("Area outside the display's limits")
