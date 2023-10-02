@@ -388,7 +388,7 @@ class it8951:
             raise ValueError("Area outside the display's limits")
         if colour > 255:
             raise ValueError("Invalid colour for the max allowed pixel depth")
-        self._send_command_args(Command.FILL_RECT, rect.to_list().append(colour))
+        self._send_command_args(Command.FILL_RECT, rect.to_list() + [colour])
         
     def force_set_temperature(self, temperature_C: int):
         """
@@ -423,8 +423,8 @@ class it8951:
         self._send_command_args(Command.BPP_SETTINGS, [is_2bpp])
 
     def _load_img_area_start(self, img_info: ImageInfo, rect: Rectangle):
-        args = [img_info.pack_to_u16()].append(rect.to_list())
-        self._send_command_args(Command.LD_IMG_AREA, args)
+        self._send_command_args(Command.LD_IMG_AREA, \
+                                [img_info.pack_to_u16()] + rect.to_list())
 
     def _load_img_end(self):
         self._send_command(Command.LD_IMG_END)
