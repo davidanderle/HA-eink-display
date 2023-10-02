@@ -162,7 +162,7 @@ class DeviceInfo:
             lut_version
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Panel width: {self.panel_width}\n" + \
                f"Panel height: {self.panel_height}\n" + \
                f"Image buffer address: {hex(self.img_buff_addr)}\n" + \
