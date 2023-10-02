@@ -336,7 +336,7 @@ class it8951:
         """
         Waits for the LUT engine to finish
         """
-        while self._read_reg(Register.LUTAFSR) != 0: pass
+        while self._read_reg(Register.LUTAFSR, 1)[0] != 0: pass
     
     def sleep(self):
         self._send_command(Command.SLEEP)
