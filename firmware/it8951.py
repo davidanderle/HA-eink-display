@@ -190,6 +190,11 @@ class Rectangle:
             self.y + self.height <= rect.x + rect.height
         )
 
+    def __str__(self) -> str:
+        return f"(x,y): ({self.x},{self.y})\n" + \
+               f"(w,h): ({self.width},{self.height})\n" + \
+               f"Area: {self.area()}"
+
 class ImageInfo:
     def __init__(self, endian: Endianness, bpp: ColorDepth, rotation: RotateMode):
         self.endianness = endian
