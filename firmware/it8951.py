@@ -314,29 +314,30 @@ class it8951:
         finally:
             self._ncs(1)
             
-    def _write_reg(self, reg: Register, data: list):
+    def _write_reg(self, reg: Register, data: int):
         """
         Writes the specified number of words to a register
         Args:
             reg: Register to write to
-            data: u16 words to write to reg
+            data: u16 word to write to reg
         """
-        self._send_command_args(Command.REG_WR, [reg] + data)
+        self._send_command_args(Command.REG_WR, [reg, data])
     
-    def _read_reg(self, reg: Register, count: int) -> list:
+    def _read_reg(self, reg: Register) -> int:
         """
         Reads the specified number of words from a register
         Args:
             reg: Register to write to
-            count: Number of registers to read from the specified register
         """
         self._send_command_args(Command.REG_RD, [reg])
-        return self._read_data(count)
+        return self._read_data(1)[0]
 
     def _wait_for_display_ready(self): 
         """
         Waits for the LUT engine to finish
         """
+        while self._read_reg(Register.LUTAFSR) != 0: pass
+    
     def set_i80_packed_mode(self, enable: bool):
         self._write_reg(Register.I80CPR, int(enable))
 
