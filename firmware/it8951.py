@@ -225,6 +225,9 @@ class it8951:
             if self.device_info.panel_height == 0 or self.device_info.panel_width == 0:
                 raise Exception("Failed to establish communication with the IT8951")
 
+            self.set_img_buff_base_address(self.device_info.img_buff_addr)
+            self.set_i80_packed_mode(True)
+
             print(self.device_info)
             self.panel_area = Rectangle(0, 0, self.device_info.panel_width, self.device_info.panel_height)
 
@@ -334,8 +337,9 @@ class it8951:
         """
         Waits for the LUT engine to finish
         """
-        while self._read_reg(Register.LUTAFSR, 1)[0] != 0: pass
-    
+    def set_i80_packed_mode(self, enable: bool):
+        self._write_reg(Register.I80CPR, int(enable))
+
     def sleep(self):
         self._send_command(Command.SLEEP)
         
@@ -428,10 +432,13 @@ class it8951:
         self._send_command(Command.LD_IMG_END)
 
     def set_img_buff_base_address(self, base_address: int):
+        if base_address & 0x3FF_FFFF != base_address:
+            raise ValueError("Base address must be maximum 26 bits")
+
         addr_h = (base_address >> 16) & 0xFFFF
         addr_l = (base_address      ) & 0xFFFF
-        # TODO: This may need 2 different reg writes
-        self._write_reg(Register.LISAR, [addr_l, addr_h])
+        self._write_reg(Register.LISAR,   addr_l)
+        self._write_reg(Register.LISAR+2, addr_h)
 
     def pixel_write(self, img_info: ImageInfo, rect: Rectangle, colour: list):
         """
