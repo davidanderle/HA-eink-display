@@ -266,12 +266,9 @@ class it8951:
         """
         Writes u16 words to the IT8951.
         Args: 
-            data: A list of u16 elements containing the data to be written. Max
-                  transfer size is 1024 words.
+            data: A list of u16 elements containing the data to be written.
         """
         if not data: return
-        if len(data) > 1024:
-            raise ValueError("Max transfer size if 1024 words")
 
         try:
             txdata = [SpiPreamble.WRITE_DATA] + data
@@ -291,11 +288,10 @@ class it8951:
         """
         Reads the specified number of 16bit words from the IT8951.
         Args:
-            length: number of u16 elements to read. Max is 1024 words.
+            length: number of u16 elements to read.
         """
         if length == 0: return []
-        if length > 1024:
-            raise ValueError("Maximum trasfer size is 1024")
+
         try:
             # The first word returned from the controller is dummy:u16
             txdata = [SpiPreamble.READ_DATA] + [0]*(length+1)
