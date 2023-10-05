@@ -148,11 +148,9 @@ class DeviceInfo:
 
         width            = u16_words[0]
         height           = u16_words[1]
-        img_buff_addr    = (u16_words[2] << 16) | u16_words[3]
-        firmware_version = ''.join(chr(word & 0xFF) + chr((word >> 8) & 0xFF)\
-                                   for word in u16_words[4:11])
-        lut_version      = ''.join(chr(word & 0xFF) + chr((word >> 8) & 0xFF)\
-                                   for word in u16_words[12:19])
+        img_buff_addr    = (u16_words[3] << 16) | u16_words[2]
+        firmware_version = ''.join([chr(x>>8)+chr(x&0xFF) for x in u16_words[4:12]])
+        lut_version      = ''.join([chr(x>>8)+chr(x&0xFF) for x in u16_words[12:20]])
 
         return cls(
             width,
