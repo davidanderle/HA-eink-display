@@ -199,7 +199,7 @@ class ImageInfo:
         self.bpp        = bpp
         self.rotation   = rotation
 
-    def pack_to_u16(self):
+    def pack_to_u16(self) -> int:
         return (self.endianness << 8) | (self.bpp << 4) | self.rotation
 
 # For the SPI protocol description, refer to 
@@ -225,7 +225,6 @@ class it8951:
             if self.device_info.panel_height == 0 or self.device_info.panel_width == 0:
                 raise Exception("Failed to establish communication with the IT8951")
 
-            self.set_img_buff_base_address(self.device_info.img_buff_addr)
             self.set_i80_packed_mode(True)
 
             print(self.device_info)
