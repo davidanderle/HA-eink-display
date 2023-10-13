@@ -334,7 +334,7 @@ class it8951:
         while self._read_reg(Register.LUTAFSR) != 0: pass
     
     def set_i80_packed_mode(self, enable: bool):
-        self._write_reg(Register.I80CPR, int(enable))
+        self._write_reg(Register.I80CPCR, int(enable))
 
     def sleep(self):
         self._send_command(Command.SLEEP)
