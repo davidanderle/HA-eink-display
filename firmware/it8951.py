@@ -50,7 +50,7 @@ class Register:
     # Set BG and FG Color if Bitmap mode enable only (1bpp)
     BGVR      = RegisterBase.DISP_CTRL + 0x250
 
-    I80CPR    = RegisterBase.SYSTEM    + 0x004
+    I80CPCR   = RegisterBase.SYSTEM    + 0x004
 
     MCSR      = RegisterBase.MEMORY_CONV + 0x00
     LISAR     = RegisterBase.MEMORY_CONV + 0x08
