@@ -225,6 +225,7 @@ class it8951:
             if self.device_info.panel_height == 0 or self.device_info.panel_width == 0:
                 raise Exception("Failed to establish communication with the IT8951")
 
+            self.set_img_buff_base_address(self.device_info.img_buff_addr)
             self.set_i80_packed_mode(True)
 
             print(self.device_info)
@@ -438,30 +439,30 @@ class it8951:
         self._write_reg(Register.LISAR,   addr_l)
         self._write_reg(Register.LISAR+2, addr_h)
 
-    def pixel_write(self, img_info: ImageInfo, rect: Rectangle, colour: list):
+    def write_packed_pixels(self, img_info: ImageInfo, rect: Rectangle, data: list):
         """
-        Writes the specified pixels to the IT8951's inernal frame buffer but
+        Writes the specified pixels to the IT8951's internal frame buffer but
         does not render the image on the screen. Call display_area after writing
         the pixels to display on the EPD
         Args:
             rect: Rectangle to colour with the specified pixels. The area of the
                   rectangle must match the number of pixels in the colour list
-            colour: List of colours to write to the area defined by 'rect'
+            colour: List of pixels to write to the area defined by 'rect'.
         """
-        if rect.area() != len(colour): 
-            raise Exception("Numbr of pixels in the rectangle must match the pixel count")
+        if img_info.bpp == ColorDepth.BPP_1BIT: 
+            raise NotImplementedError("The feature is not supported")
+        #if rect.area() != len(data)*ColorDepth.pixel_per_byte(img_info.bpp)*2: 
+        #    raise Exception("Numbr of pixels in the rectangle must match the pixel count")
         if not rect.is_contained_within(self.panel_area):
             raise ValueError("Area outside the display's limits")
-        if any(c > 255 for c in colour):
-            raise ValueError("Invalid colour for the max allowed pixel depth")
 
-        self._wait_for_display_ready()
         self._load_img_area_start(img_info, rect)
-        self._write_data(colour)
+        self._write_data(data)
         self._load_img_end()
     
     def display_area(self, rect: Rectangle, display_mode: DisplayMode):
         """
         Displays the pixels loaded to the frame buffer to the specified area
         """
+        self._wait_for_display_ready()
         self._send_command_args(Command.DPY_AREA, rect.to_list() + [display_mode])
