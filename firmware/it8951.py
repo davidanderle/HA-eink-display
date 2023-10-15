@@ -373,7 +373,7 @@ class it8951:
         rxdata = self._read_data(int(DeviceInfo.Size/2))
         return DeviceInfo.from_u16_words(rxdata)
     
-    def fill_rect(self, rect: Rectangle, colour: int):
+    def fill_rect(self, rect: Rectangle, mode: DisplayMode, colour: int):
         """
         Fills the specified rectangle with a uniform color. The rectangle must
         be within the display's area and the pixel bit depth must not be more
@@ -386,7 +386,9 @@ class it8951:
             raise ValueError("Area outside the display's limits")
         if colour > 255:
             raise ValueError("Invalid colour for the max allowed pixel depth")
-        self._send_command_args(Command.FILL_RECT, rect.to_list() + [colour])
+        # Refresh EPD and change image buffer content with the assigned colour
+        arg4 = 0x1100 | mode 
+        self._send_command_args(Command.FILL_RECT, rect.to_list() + [arg4, colour])
         
     def force_set_temperature(self, temperature_C: int):
         """
