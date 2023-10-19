@@ -107,6 +107,19 @@ class ColorDepth:
     BPP_3BIT = 1
     BPP_4BIT = 2
     BPP_8BIT = 3
+    BPP_1BIT = 4
+
+    _bpp_map = {
+        BPP_1BIT: 8,
+        BPP_2BIT: 4,
+        BPP_3BIT: 2,
+        BPP_4BIT: 2,
+        BPP_8BIT: 1
+    }
+    
+    @classmethod
+    def pixel_per_byte(cls, bpp: 'ColorDepth'):
+        return cls._bpp_map.get(bpp)
 
 # Rotational angle of the displayed image
 class RotateMode:
@@ -438,6 +451,33 @@ class it8951:
         addr_l = (base_address      ) & 0xFFFF
         self._write_reg(Register.LISAR,   addr_l)
         self._write_reg(Register.LISAR+2, addr_h)
+
+    @classmethod
+    def pack_pixels(cls, img_info: ImageInfo, rect: Rectangle, colour: list) -> list:
+        pix_per_byte = ColorDepth.pixel_per_byte(img_info.bpp)
+
+        words = []
+        if img_info.bpp == ColorDepth.BPP_4BIT and img_info.endianness == Endianness.LITTLE:
+            start_mod = rect.x % 4
+            end_mod   = (rect.x + rect.width) % 4
+
+            start_padding = 4 - start_mod if start_mod != 0 else 0
+            end_padding   = 4 - end_mod   if end_mod   != 0 else 0
+
+            for row in range(rect.height-1, -1, -1):
+                idx = (row+1)*rect.width
+                colour[idx:idx] = [0]*end_padding
+                idx = row*rect.width
+                colour[idx:idx] = [0]*start_padding
+
+        for i in range(0, len(colour), 4):
+            words.append(colour[i] | (colour[i+1] << 4) | (colour[i+2] << 8) | (colour[i+3] << 12))
+        return words
+
+        # The following alignment rules must be met:
+        # 2bpp -> start_x % 8 = 0, end_x % 8 = 0
+        # 4bpp -> start_x % 4 = 0, end_x % 4 = 0
+        # 8bpp -> start_x % 2 = 0, end_x % 2 = 0
 
     def write_packed_pixels(self, img_info: ImageInfo, rect: Rectangle, data: list):
         """

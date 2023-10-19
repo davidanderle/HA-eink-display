@@ -7,7 +7,7 @@ import os
 # Ensure that the parent directory is visible from this module
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
-from it8951 import it8951, Command
+from it8951 import *
 
 class test_it8951(unittest.TestCase):
     print("==[Running it8951 tests]==")
@@ -73,6 +73,32 @@ class test_it8951(unittest.TestCase):
             tcon.set_vcom(vcom_mV, write_to_flash)
         self.assertEqual(self.ncs, 1)
         self.assertEqual(self.txed_bytes, expected_tx)
+
+    @parameterized.expand([
+        (ColorDepth.BPP_4BIT, Rectangle(0, 0, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(0, 1, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(0, 2, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(0, 3, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(1, 0, 2, 2), [0x0FF0, 0x0FF0]),
+        (ColorDepth.BPP_4BIT, Rectangle(1, 1, 2, 2), [0x0FF0, 0x0FF0]),
+        (ColorDepth.BPP_4BIT, Rectangle(1, 2, 2, 2), [0x0FF0, 0x0FF0]),
+        (ColorDepth.BPP_4BIT, Rectangle(1, 3, 2, 2), [0x0FF0, 0x0FF0]),
+        (ColorDepth.BPP_4BIT, Rectangle(2, 0, 2, 2), [0xFF00, 0xFF00]),
+        (ColorDepth.BPP_4BIT, Rectangle(2, 1, 2, 2), [0xFF00, 0xFF00]),
+        (ColorDepth.BPP_4BIT, Rectangle(2, 2, 2, 2), [0xFF00, 0xFF00]),
+        (ColorDepth.BPP_4BIT, Rectangle(2, 3, 2, 2), [0xFF00, 0xFF00]),
+        (ColorDepth.BPP_4BIT, Rectangle(3, 0, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
+        (ColorDepth.BPP_4BIT, Rectangle(3, 1, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
+        (ColorDepth.BPP_4BIT, Rectangle(3, 2, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
+        (ColorDepth.BPP_4BIT, Rectangle(3, 3, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 0, 2, 2), [0xFFFF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 1, 2, 2), [0xFFFF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 2, 2, 2), [0xFFFF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 3, 2, 2), [0xFFFF])
+    ])
+    def test_pack_pixels(self, bpp: ColorDepth, rect: Rectangle, expected_words: list):
+        img_info = ImageInfo(Endianness.LITTLE, bpp, RotateMode.ROTATE_0)
+        self.assertEqual(it8951.pack_pixels(img_info, rect, [0xF]*4), expected_words)
     
     # This method is called before any tests are run 
     @classmethod
