@@ -99,7 +99,7 @@ class test_it8951(unittest.TestCase):
     ])
     def test_pack_pixels(self, bpp: ColorDepth, rect: Rectangle, expected_words: list):
         img_info = ImageInfo(Endianness.LITTLE, bpp, RotateMode.ROTATE_0)
-        self.assertEqual(it8951.pack_pixels(img_info, rect, [0xF]*4), expected_words)
+        self.assertEqual(it8951.pack_pixels(img_info, rect, [0xF]*rect.area()), expected_words)
     
     # This method is called before any tests are run 
     @classmethod
