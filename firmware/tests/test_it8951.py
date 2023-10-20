@@ -91,10 +91,11 @@ class test_it8951(unittest.TestCase):
         (ColorDepth.BPP_4BIT, Rectangle(3, 1, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
         (ColorDepth.BPP_4BIT, Rectangle(3, 2, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
         (ColorDepth.BPP_4BIT, Rectangle(3, 3, 2, 2), [0xF000, 0x000F, 0xF000, 0x000F]),
-        (ColorDepth.BPP_4BIT, Rectangle(4, 0, 2, 2), [0xFFFF]),
-        (ColorDepth.BPP_4BIT, Rectangle(4, 1, 2, 2), [0xFFFF]),
-        (ColorDepth.BPP_4BIT, Rectangle(4, 2, 2, 2), [0xFFFF]),
-        (ColorDepth.BPP_4BIT, Rectangle(4, 3, 2, 2), [0xFFFF])
+        (ColorDepth.BPP_4BIT, Rectangle(4, 0, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 1, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 2, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(4, 3, 2, 2), [0x00FF, 0x00FF]),
+        (ColorDepth.BPP_4BIT, Rectangle(3, 0, 4, 1), [0xF000, 0x0FFF])
     ])
     def test_pack_pixels(self, bpp: ColorDepth, rect: Rectangle, expected_words: list):
         img_info = ImageInfo(Endianness.LITTLE, bpp, RotateMode.ROTATE_0)

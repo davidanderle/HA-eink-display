@@ -454,6 +454,10 @@ class it8951:
 
     @classmethod
     def pack_pixels(cls, img_info: ImageInfo, rect: Rectangle, colour: list) -> list:
+        # The following alignment rules must be met:
+        # 2bpp -> start_x % 8 = 0, end_x % 8 = 0
+        # 4bpp -> start_x % 4 = 0, end_x % 4 = 0
+        # 8bpp -> start_x % 2 = 0, end_x % 2 = 0
         pix_per_byte = ColorDepth.pixel_per_byte(img_info.bpp)
 
         words = []
@@ -461,9 +465,10 @@ class it8951:
             start_mod = rect.x % 4
             end_mod   = (rect.x + rect.width) % 4
 
-            start_padding = 4 - start_mod if start_mod != 0 else 0
-            end_padding   = 4 - end_mod   if end_mod   != 0 else 0
+            start_padding = start_mod if start_mod != 0 else 0
+            end_padding   = 4 - end_mod if end_mod != 0 else 0
 
+            # Loop backwards on the list to not mess up indices
             for row in range(rect.height-1, -1, -1):
                 idx = (row+1)*rect.width
                 colour[idx:idx] = [0]*end_padding
@@ -473,11 +478,6 @@ class it8951:
         for i in range(0, len(colour), 4):
             words.append(colour[i] | (colour[i+1] << 4) | (colour[i+2] << 8) | (colour[i+3] << 12))
         return words
-
-        # The following alignment rules must be met:
-        # 2bpp -> start_x % 8 = 0, end_x % 8 = 0
-        # 4bpp -> start_x % 4 = 0, end_x % 4 = 0
-        # 8bpp -> start_x % 2 = 0, end_x % 2 = 0
 
     def write_packed_pixels(self, img_info: ImageInfo, rect: Rectangle, data: list):
         """
