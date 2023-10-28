@@ -115,6 +115,9 @@ Note that this port is compiled with a color depth of 8 bits as 4 bpp is not
 natively supported. The 8 bit pixels will be converted to 4bpp before sending
 them to the display in a callback function.
 
+### TODO
+Note that the build only succeeds for BOARD=GENERIC_S3_SPIRAM, following the patches recommended [here](https://github.com/lvgl/lv_binding_micropython/issues/227#issuecomment-1596203164). Check if this works with the ProS3 and if not, use this build setup to modify the relevant files to enable the compilation for the ProS3
+
 # References
 
 ICE driving board
