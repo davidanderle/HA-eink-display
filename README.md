@@ -86,25 +86,34 @@ If done correctly, this is what you should roughly see when pressing the conical
 2. Ensure that the board is powered from a 5V line as the EPD PMIC needs this voltage. On the e-ink ICE driving board, I had to solder a wire on a resistor under the USB connector as the 5V line was not broken out on any of the pins...
 ![image](https://github.com/davidanderle/eink_calendar/assets/17354704/3dca032c-fc01-4353-b139-fc69d722a0d5)
 
-# Required packages
-
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
 - [375678 LiPo](https://www.aliexpress.com/item/1005004946019552.html?spm=a2g0o.cart.0.0.d80e38daNEjZz4&mp=1#nav-specification), 2500mAh, 3.7mm thick battery. (Positive and negative wires are swapped compared to the ProS3's LiPo charger!) £13.41
 - [E-Ink VB3300-KCA](https://www.waveshare.com/product/displays/e-paper/epaper-1/10.3inch-e-paper-d.htm?___SID=U), flexible, 450ms full refresh, 4bpp, 10.3", 1872x1404 px display, £156.23+postage
 
-# Potential libraries to use
-
-https://github.com/robweber/omni-epd
-
-https://github.com/GregDMeyer/IT8951
-
-https://github.com/txoof/PaperPi/tree/main
 
 # Reading the external SPI NOR flash from the ICE board
 Using a J-Link Ultra+, download the SEGGER J-Flash SPI tool and go `Target > Read back > Entire chip`. Ensure that your SPI speed is sufficiently low to cope with the wiring's length. At `1MHz` it took me 34sec to download.
 ![image](https://github.com/davidanderle/eink_calendar/assets/17354704/6486e221-4802-4124-b2e9-9e668b6178bf)
 
+# Building LVGL + MicroPython port (lv_micropython) for the ProS3
+**A word of warning:** The building of this binary is not trivial and things will likely break for the first couple attempts. The fact that the build process takes hours to complete is also not helpful... So be patient and get your Google-skills ready! Alternatively, since not all wears hero capes, I have uploaded **[TODO]** the compiled binary to this repo should you end up using the same setup.
+
+This build requires a Linux setup, therefore in this section I'm using WSL2 with Ubuntu 22.04 distro. If you're using this setup, you will need to install `make`, `gcc`, `python3`, `python3-pip`, and `cmake`.
+
+Follow the instructions detailed at [MicroPython port to the ESP32](https://github.com/lvgl/lv_micropython/tree/master/ports/esp32). **The last required step in this** `README` **is** `source export.sh` Note that you will need `esp-idf v4.4.6` for the ESP32-S3 chip's uP port, so use the following command when cloning the ESP-IDF SDK:
+```
+git clone -b v4.4.6 --recursive https://github.com/espressif/esp-idf.git
+```
+Once done follow the steps at [lv_micropython](https://github.com/lvgl/lv_micropython/tree/master) to create the LVGL uP port for the UnexpectedMaker ProS3 port for an 8-bit display using the ESP-IDF SDK you've just installed:
+
+```
+make -C ports/esp32 LV_CFLAGS="-DLV_COLOR_DEPTH=8" BOARD=UM_PROS3
+```
+
+Note that this port is compiled with a color depth of 8 bits as 4 bpp is not
+natively supported. The 8 bit pixels will be converted to 4bpp before sending
+them to the display in a callback function.
 
 # References
 
