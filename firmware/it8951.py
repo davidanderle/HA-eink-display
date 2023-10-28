@@ -454,6 +454,7 @@ class it8951:
 
     @classmethod
     def pack_pixels(cls, img_info: ImageInfo, rect: Rectangle, colour: list) -> list:
+        # TODO: Generalise it to other bpps
         # The following alignment rules must be met:
         # 2bpp -> start_x % 8 = 0, end_x % 8 = 0
         # 4bpp -> start_x % 4 = 0, end_x % 4 = 0
