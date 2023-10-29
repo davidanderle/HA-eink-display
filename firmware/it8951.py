@@ -103,9 +103,13 @@ class Command:
 
 # Color-depth of the display to drive
 class ColorDepth:
+    # |P[n+7]|P[n+6]|P[n+5]|P[n+4]|P[n+3]|P[n+2]|P[n+1]|P[n+0]|
     BPP_2BIT = 0
+    # |P[n+3] 0|P[n+2] 0|P[n+1] 0|P[n+0] 0|
     BPP_3BIT = 1
+    # |P[n+3]|P[n+2]|P[n+1]|P[n+0]|
     BPP_4BIT = 2
+    # |P[n+1]|P[n+0]|
     BPP_8BIT = 3
     BPP_1BIT = 4
 
