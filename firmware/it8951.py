@@ -306,6 +306,19 @@ class it8951:
         finally:
             self._ncs(1)
 
+    def _write_bytes(self, txbytes: bytearray):
+        """
+        This method should be used to accelerate transfers by having the
+        bytearray pre-formatted.
+        """
+        if not txbytes: return
+        try:
+            self._wait_ready()
+            self._ncs(0)
+            self._spi.write(txbytes)
+        finally:
+            self._ncs(1)
+
     def _send_command_args(self, command: Command, args: list):
         self._send_command(command)
         self._write_data(args)
@@ -511,7 +524,12 @@ class it8951:
             raise ValueError("Area outside the display's limits")
 
         self._load_img_area_start(img_info, rect)
-        self._write_data(data)
+        if isinstance(data, list):
+            self._write_data(data)
+        elif isinstance(data, bytearray):
+            self._write_bytes(data)
+        else:
+            raise TypeError("data argument must be a list or a bytearray")
         self._load_img_end()
     
     def display_area(self, rect: Rectangle, display_mode: DisplayMode):
