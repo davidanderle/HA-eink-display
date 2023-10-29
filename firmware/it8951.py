@@ -113,17 +113,29 @@ class ColorDepth:
     BPP_8BIT = 3
     BPP_1BIT = 4
 
-    _bpp_map = {
+    _bpp_per_byte_map = {
         BPP_1BIT: 8,
         BPP_2BIT: 4,
         BPP_3BIT: 2,
         BPP_4BIT: 2,
         BPP_8BIT: 1
     }
+
+    _bpp_code_map = {
+        1: BPP_1BIT,
+        2: BPP_2BIT,
+        3: BPP_3BIT,
+        4: BPP_4BIT,
+        8: BPP_8BIT
+    }
     
     @classmethod
     def pixel_per_byte(cls, bpp: 'ColorDepth'):
-        return cls._bpp_map.get(bpp)
+        return cls._bpp_per_byte_map.get(bpp)
+
+    @classmethod
+    def bpp_to_code(cls, bpp: int):
+        return cls._bpp_code_map.get(bpp)
 
 # Rotational angle of the displayed image
 class RotateMode:
@@ -506,7 +518,7 @@ class it8951:
             words.append(colour[i] | (colour[i+1] << 4) | (colour[i+2] << 8) | (colour[i+3] << 12))
         return words
 
-    def write_packed_pixels(self, img_info: ImageInfo, rect: Rectangle, data: list):
+    def write_packed_pixels(self, img_info: ImageInfo, rect: Rectangle, data):
         """
         Writes the specified pixels to the IT8951's internal frame buffer but
         does not render the image on the screen. Call display_area after writing
@@ -518,8 +530,6 @@ class it8951:
         """
         if img_info.bpp == ColorDepth.BPP_1BIT: 
             raise NotImplementedError("The feature is not supported")
-        #if rect.area() != len(data)*ColorDepth.pixel_per_byte(img_info.bpp)*2: 
-        #    raise Exception("Numbr of pixels in the rectangle must match the pixel count")
         if not rect.is_contained_within(self.panel_area):
             raise ValueError("Area outside the display's limits")
 
@@ -531,7 +541,37 @@ class it8951:
         else:
             raise TypeError("data argument must be a list or a bytearray")
         self._load_img_end()
-    
+
+    def load_bmp(self, x: int, y: int, img: str):
+        with open(img, 'rb') as f:
+            # Handle lazyness. See https://en.wikipedia.org/wiki/BMP_file_format)
+            if f.read(2) != b'BM':
+                raise ValueError("BMP must have Windows (BM) bitmap header")
+
+            # byte [10:13] encodes the pixel byte array offset in the img
+            f.seek(10) 
+            pix_arr_offset = int.from_bytes(f.read(4), 'little')
+
+            # byte [18:21] encodes the bitmap width in pixels
+            # byte [22:25] encodes the bitmap height in pixels
+            f.seek(18) 
+            width = int.from_bytes(f.read(4), 'little')
+            height = int.from_bytes(f.read(4), 'little')
+
+            # byte [28:29] encodes the bpp of the image
+            f.seek(28)
+            bpp = int.from_bytes(f.read(2), 'little')
+
+            buf = bytearray(int(width*height/(8/bpp)))
+            print(len(buf))
+
+            f.seek(pix_arr_offset)
+            f.readinto(buf)
+        
+        rect = Rectangle(x, y, width, height)
+        img_info = ImageInfo(Endianness.LITTLE, ColorDepth.bpp_to_code(bpp), RotateMode.ROTATE_0)
+        self.write_packed_pixels(img_info, rect, buf)
+
     def display_area(self, rect: Rectangle, display_mode: DisplayMode):
         """
         Displays the pixels loaded to the frame buffer to the specified area
