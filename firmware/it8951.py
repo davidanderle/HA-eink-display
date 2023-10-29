@@ -223,7 +223,16 @@ class ImageInfo:
 # https://www.waveshare.net/w/upload/1/18/IT8951_D_V0.2.4.3_20170728.pdf and
 # https://v4.cecdn.yun300.cn/100001_1909185148/IT8951_I80+ProgrammingGuide_16bits_20170904_v2.7_common_CXDX.pdf
 class it8951:
-    def __init__(self, spi: SPI, ncs: Pin, hrdy: Pin, vcom_mV: int):
+    def __init__(self, spi: SPI, ncs: Pin, hrdy: Pin, vcom_mV):
+        """
+        Args:
+            spi: Initialised SPI channel with SCLK <24MHz.
+            ncs: Initialised GPIO for the nCS output pin
+            hrdy: Initialised GPIO for the HRDY input pin
+            vcom_mV: [Optional] Note that the IT8951 development
+            boards ship with waveforms that are tuned to a specific vcom voltage.
+            Therefore setting this may mess up the drawn pixels.
+        """
         # There are 2 hardware SPI channels on the ESP32 and they can be mapped
         # to any pin, however, they are limited to 40MHz if not used on the 
         # default ones. The IT8951's maximum SPI speed is 24MHz either way, so 
@@ -251,7 +260,7 @@ class it8951:
             rxvcom_mV = self.get_vcom()
             print(f"Current VCOM = {rxvcom_mV/1000}")
 
-            if vcom_mV != rxvcom_mV:
+            if vcom_mV is not None and vcom_mV != rxvcom_mV:
                 print(f"Settig VCOM to the new value: {vcom_mV/1000}... ", end='')
                 self.set_vcom(vcom_mV)
                 print("Success" if self.get_vcom() == vcom_mV else "Failed")
