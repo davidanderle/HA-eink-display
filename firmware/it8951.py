@@ -307,7 +307,6 @@ class it8951:
             data: A list of u16 elements containing the data to be written.
         """
         if not data: return
-
         try:
             txdata = [SpiPreamble.WRITE_DATA] + data
             self._wait_ready()
@@ -320,14 +319,16 @@ class it8951:
 
     def _write_bytes(self, txbytes: bytearray):
         """
-        This method should be used to accelerate transfers by having the
-        bytearray pre-formatted.
+        This method should be used for non-register data transfers, where the 
+        monitoring of the HRDY pin is irrelevant. Used to transfer images
+        Args:
+            txbytes: pre-formatted data bytes. Endianness depends on ImageInfo
         """
         if not txbytes: return
         try:
             self._wait_ready()
             self._ncs(0)
-            self._spi.write(bytearray([0, 0]))
+            self._spi.write(SpiPreamble.WRITE_DATA.to_bytes(2, 'big'))
             self._spi.write(txbytes)
         finally:
             self._ncs(1)
