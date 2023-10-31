@@ -327,6 +327,7 @@ class it8951:
         try:
             self._wait_ready()
             self._ncs(0)
+            self._spi.write(bytearray([0, 0]))
             self._spi.write(txbytes)
         finally:
             self._ncs(1)
@@ -563,11 +564,10 @@ class it8951:
             bpp = int.from_bytes(f.read(2), 'little')
 
             buf = bytearray(int(width*height/(8/bpp)))
-            print(len(buf))
 
             f.seek(pix_arr_offset)
             f.readinto(buf)
-        
+
         rect = Rectangle(x, y, width, height)
         img_info = ImageInfo(Endianness.LITTLE, ColorDepth.bpp_to_code(bpp), RotateMode.ROTATE_0)
         self.write_packed_pixels(img_info, rect, buf)
