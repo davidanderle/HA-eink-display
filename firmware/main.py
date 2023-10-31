@@ -3,7 +3,6 @@ from machine import SPI, Pin
 import pros3
 import framebuf
 from it8951 import *
-from epd import epd
 
 # Note: MicroPyhon does not support array objects well..
 # Note: This code runs on Windows and MP as well 10/09/2023
