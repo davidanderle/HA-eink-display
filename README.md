@@ -97,13 +97,13 @@ Using a J-Link Ultra+, download the SEGGER J-Flash SPI tool and go `Target > Rea
 ![image](https://github.com/davidanderle/eink_calendar/assets/17354704/6486e221-4802-4124-b2e9-9e668b6178bf)
 
 # Building LVGL + MicroPython port (lv_micropython) for the ProS3
-**A word of warning:** The building of this binary is not trivial and things will likely break for the first couple attempts. The fact that the build process takes hours to complete is also not helpful... So be patient and get your Google-skills ready! Alternatively, since not all wears hero capes, I have uploaded **[TODO]** the compiled binary to this repo should you end up using the same setup.
+**A word of warning:** The building of this binary is not trivial and things like like your router will misterously break before you can even attempt the build. The fact that the build process takes hours to complete is also not helpful... So be patient and get your Google-skills ready! Alternatively, since not all wears hero capes, I have uploaded **[TODO]** the compiled binaries to this repo should you end up using the same setup.
 
 This build requires a Linux setup, therefore in this section I'm using WSL2 with Ubuntu 22.04 distro. If you're using this setup, you will need to install `make`, `gcc`, `python3`, `python3-pip`, and `cmake`.
 
 Follow the instructions detailed at [MicroPython port to the ESP32](https://github.com/lvgl/lv_micropython/tree/master/ports/esp32). **The last required step in this** `README` **is** `source export.sh` Note that you will need `esp-idf v4.4.6` for the ESP32-S3 chip's uP port, so use the following command when cloning the ESP-IDF SDK:
 ```
-git clone -b v4.4.6 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v4.4 --recursive https://github.com/espressif/esp-idf.git
 ```
 Once done follow the steps at [lv_micropython](https://github.com/lvgl/lv_micropython/tree/master) to create the LVGL uP port for the UnexpectedMaker ProS3 port for an 8-bit display using the ESP-IDF SDK you've just installed:
 
@@ -114,6 +114,9 @@ make -C ports/esp32 LV_CFLAGS="-DLV_COLOR_DEPTH=8" BOARD=UM_PROS3
 Note that this port is compiled with a color depth of 8 bits as 4 bpp is not
 natively supported. The 8 bit pixels will be converted to 4bpp before sending
 them to the display in a callback function.
+
+### TODO
+Note that the build only succeeds for BOARD=GENERIC_S3_SPIRAM, following the patches recommended [here](https://github.com/lvgl/lv_binding_micropython/issues/227#issuecomment-1596203164). Check if this works with the ProS3 and if not, use this build setup to modify the relevant files to enable the compilation for the ProS3
 
 # References
 
