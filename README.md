@@ -4,14 +4,19 @@ I started this project on 27 Aug 2023 and is a work in progress. My original att
 # Goal
 A thin, light-weight, long battery life E-Ink-based calendar that syncs its content to 2 gmail calendars. The display would show 7 days (rolling) of events in a portrait orientation, along with the estimated time to work for the 2 google account holders. It would also have a quick weather overview and a battery life indicator.
 
-# Hellow, world!
-
-# Test setup
-
 # Hardware setup
 1. Set the dip-switches into a 0b001 position (sw3 at ON position) to enable the SPI Slave communication. This is counter-intuitive as sw1 should've been bit0...
 2. Ensure that the board is powered from a 5V line as the EPD PMIC needs this voltage. On the e-ink ICE driving board, I had to solder a wire on a resistor under the USB connector as the 5V line was not broken out on any of the pins...
 ![image](https://github.com/davidanderle/eink_calendar/assets/17354704/3dca032c-fc01-4353-b139-fc69d722a0d5)
+
+# Hellow, world!
+I am using a Visual Studio Code setup with PowerShell.
+## Arduino setup through Platform-IO
+1. Download the PlatformIO extension
+2. Create a new PlatformIO project for the Unexpected Maker ProS3 board.
+3. 
+
+# Test setup
 
 # BOM
 - [ProS3](https://www.amazon.co.uk/gp/product/B09X22YBG7/ref=ewc_pr_img_2?smid=AGX9N6DGNRN2Q&psc=1) EPS32-S3 based WiFi+BLE+LiPo charger+PicoBlade to JST cable from [@UnexpectedMaker](https://github.com/UnexpectedMaker)'s [esp32s3](https://github.com/UnexpectedMaker/esp32s3) project, £26.99
