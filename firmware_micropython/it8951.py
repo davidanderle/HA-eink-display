@@ -196,32 +196,6 @@ class DeviceInfo:
                f"Firmware version: {self.firmware_version}\n" + \
                f"LUT version: {self.lut_version}"
 
-class Rectangle:
-    def __init__(self, x: int, y: int, w: int, h: int):
-        self.x      = x
-        self.y      = y
-        self.width  = w
-        self.height = h
-
-    def area(self) -> int:
-        return self.width*self.height
-        
-    def to_list(self) -> list:
-        return [self.x, self.y, self.width, self.height]
-    
-    def is_contained_within(self, rect: 'Rectangle') -> bool:
-        return (
-            self.x >= rect.x and
-            self.y >= rect.y and
-            self.x + self.width <= rect.x + rect.width and
-            self.y + self.height <= rect.x + rect.height
-        )
-
-    def __str__(self) -> str:
-        return f"(x,y): ({self.x},{self.y})\n" + \
-               f"(w,h): ({self.width},{self.height})\n" + \
-               f"Area: {self.area()}"
-
 class ImageInfo:
     def __init__(self, endian: Endianness, bpp: ColorDepth, rotation: RotateMode):
         self.endianness = endian
