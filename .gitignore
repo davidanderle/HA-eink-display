@@ -1,6 +1,6 @@
 esptool*
 E-LINK-TCON-DEMO
 resources
-*.pyc
 .pio
 .vscode/*
+*.old
