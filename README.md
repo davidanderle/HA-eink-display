@@ -1,20 +1,24 @@
 # Introduction
-I started this project on 27 Aug 2023 and is a work in progress. My original attempt was to write the firmware in MicroPython using the LVGL graphics library, but alas after painful trials it turned out that LVGL's MicroPython port is not yet ready to to run on the ESP-S3 chip. One legacy of this experiment is that now there is a MicroPython driver for the IT8951 chip to drive eink displays.
+I started this project on 27 Aug 2023 and is a work in progress. My original attempt was to write the firmware in MicroPython using the LVGL graphics library, but alas after painful trials it turned out that LVGL's MicroPython port is not yet ready to to run on the ESP32-S3 chip. One legacy of this experiment is that now there is a MicroPython driver for the IT8951 chip to drive eink displays on one of the project's branches (TODO link).
 
 # Goal
-A thin, light-weight, long battery life E-Ink-based calendar that syncs its content to 2 gmail calendars. The display would show 7 days (rolling) of events in a portrait orientation, along with the estimated time to work for the 2 google account holders. It would also have a quick weather overview and a battery life indicator.
+A thin, light-weight, battery-driven, E-Ink-based [Home Assistant](https://www.home-assistant.io/) display that acts as a BLE slave and displays data like calendar events from 2 accounts, our home's current day energy/water consumtion, commuting travel times, and other things.
 
 # Hardware setup
 1. Set the dip-switches into a 0b001 position (sw3 at ON position) to enable the SPI Slave communication. This is counter-intuitive as sw1 should've been bit0...
 2. Ensure that the board is powered from a 5V line as the EPD PMIC needs this voltage. On the e-ink ICE driving board, I had to solder a wire on a resistor under the USB connector as the 5V line was not broken out on any of the pins...
 ![image](https://github.com/davidanderle/eink_calendar/assets/17354704/3dca032c-fc01-4353-b139-fc69d722a0d5)
+3. Download the [CP210x Universal Windows Driver](https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip) and install it to allow you to upload code on the ProS3.
 
 # Hellow, world!
 I am using a Visual Studio Code setup with PowerShell.
-## Arduino setup through Platform-IO
+## Espressif setup through Platform-IO
 1. Download the PlatformIO extension
 2. Create a new PlatformIO project for the Unexpected Maker ProS3 board.
-3. 
+3. Put the ProS3 in download mode:
+    - Press & hold the `BOOT` button
+    - Press the `RST` button
+    - Release the `BOOT` button
 
 # Test setup
 
