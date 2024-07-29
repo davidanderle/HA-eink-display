@@ -1,10 +1,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
-#include <assert.h>
-#include <stdbool.h>
 #include "it8951.h"
 
 static inline u32 it8951_get_pixel_per_byte(eIT8951_ColorDepth_t bpp) {

@@ -1,6 +1,10 @@
 #ifndef __IT8951_H__
 #define __IT8951_H__
 
+#include <assert.h>
+#include <stdint.h>
+#include <stdbool.h>
+
 // TODO: Put to utilites.h
 typedef uint32_t u32;
 typedef uint16_t u16;
