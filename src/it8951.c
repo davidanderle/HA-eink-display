@@ -4,12 +4,12 @@
 #include <string.h>
 #include "it8951.h"
 
-static inline u32 it8951_get_pixel_per_byte(eIT8951_ColorDepth_t bpp) {
+static inline uint32_t it8951_get_pixel_per_byte(eIT8951_ColorDepth_t bpp) {
     assert(IsEnum_IT8951_ColorDepth(bpp));
     return IT8951_BPP_PER_BYTE_MAP[bpp];
 }
 
-static inline u32 it8951_bpp_to_code(const u32 bpp) {
+static inline uint32_t it8951_bpp_to_code(const uint32_t bpp) {
     assert(IS_WITHIN_RANGE(bpp, 1, 4) || bpp == 8);
     return IT8951_BPP_CODE_MAP[bpp];
 }
@@ -37,7 +37,7 @@ char *it8951_device_info_to_string(const stIT8951_DeviceInfo_t *const dev_info, 
 /// @param rect Pointer to the rectangle
 /// @return Area of the rectangle
 __attribute__((const))
-u32 rectangle_get_area(const stRectangle *const rect){
+uint32_t rectangle_get_area(const stRectangle *const rect){
     return rect->width * rect->height;
 }
 
@@ -73,7 +73,7 @@ static inline void wait_ready(stIT8951_Handler_t *hdlr) {
     while(hdlr->get_hrdy() == 0);
 }
 
-static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const u16 *const data, const u32 count) {
+static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const uint32_t count) {
     assert(hdlr);
     assert(IsEnum_IT8951_SpiPreamble(preamble));
 
@@ -86,9 +86,9 @@ static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamb
     wait_ready(hdlr);
     hdlr->set_ncs(0);
     // Loop from -1 to send the preamble, without requiring new arr allocation
-    for(i32 i=-1; i<count && status; i++) {
-        const u16 txdata = (i >= 0) ? data[i] : preamble;
-        status = hdlr->spi_transcieve((u16[]){__builtin_bswap16(txdata)}, NULL, sizeof(u16));
+    for(int32_t i=-1; i<count && status; i++) {
+        const uint16_t txdata = (i >= 0) ? data[i] : preamble;
+        status = hdlr->spi_transcieve((uint16_t[]){__builtin_bswap16(txdata)}, NULL, sizeof(uint16_t));
         wait_ready(hdlr);
     }
     // Ensure that the nCS is set back to the inactive state, whatever happens
@@ -102,15 +102,15 @@ static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamb
 /// @return True if the SPI transaction succeeded, false otherwise
 static inline bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd) {
     assert(IsEnum_eIT8951_Command(cmd));
-    return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_COMMAND, (u16*)&cmd, 1);
+    return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_COMMAND, (uint16_t*)&cmd, 1);
 }
 
 // TODO: write_data/write_bytes and the packed pixel transfer could be revisited
-/// @brief Writes u16 words to the IT8951.
-/// @param data An of u16 elements containing the data to be written.
+/// @brief Writes uint16_t words to the IT8951.
+/// @param data An of uint16_t elements containing the data to be written.
 /// @param count Number of elements to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool write_data(stIT8951_Handler_t *hdlr, const u16 *const data, const u32 count) {
+static inline bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const data, const uint32_t count) {
     return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_WRITE_DATA, data, count);
 }
 
@@ -120,17 +120,17 @@ static inline bool write_data(stIT8951_Handler_t *hdlr, const u16 *const data, c
 /// @param data Pre-formatted data bytes. Endianness depends on ImageInfo
 /// @param count Number of bytes to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static bool write_bytes(stIT8951_Handler_t *hdlr, const u8 *const data, const u32 count) {
+static bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const uint32_t count) {
     assert(hdlr && data);
 
-    const size_t txsize = count*sizeof(u8)+sizeof(u16); 
-    u8 *txdata = malloc(txsize);
+    const size_t txsize = count*sizeof(uint8_t)+sizeof(uint16_t); 
+    uint8_t *txdata = malloc(txsize);
     if(!txdata) {
         return false;
     }
-    const u16 preamble = __builtin_bswap16(IT8951_SPI_PREAMBLE_WRITE_DATA);
-    memcpy(&txdata[0], &preamble, sizeof(u16));
-    memcpy(&txdata[2], data, count*sizeof(u8));
+    const uint16_t preamble = __builtin_bswap16(IT8951_SPI_PREAMBLE_WRITE_DATA);
+    memcpy(&txdata[0], &preamble, sizeof(uint16_t));
+    memcpy(&txdata[2], data, count*sizeof(uint8_t));
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
@@ -148,7 +148,7 @@ static bool write_bytes(stIT8951_Handler_t *hdlr, const u8 *const data, const u3
 /// @param data Data to send 
 /// @param count Number of words to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd, const u16 *const data, const u32 count) {
+static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd, const uint16_t *const data, const uint32_t count) {
     return send_command(hdlr, cmd) && write_data(hdlr, data, count);
 }
 
@@ -158,7 +158,7 @@ static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Com
 /// store count*2byte of data.
 /// @param count Number of 16bit words to read
 /// @return True if the SPI transaction succeeded, false otherwise
-static bool read_data(stIT8951_Handler_t *hdlr, u16 *const data, const u32 count) {
+static bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const uint32_t count) {
     assert(hdlr && data);
     
     bool status = true;
@@ -170,11 +170,11 @@ static bool read_data(stIT8951_Handler_t *hdlr, u16 *const data, const u32 count
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
-    for(i32 i=-2; i<count && status; i++) {
-        const u16 txdata = (i == -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
-        u16 rxdata;
-        status = hdlr->spi_transcieve(&txdata, &rxdata, sizeof(u16));
-        // The first 2xu16 words are discarded (preamble reply and dummy word)
+    for(int32_t i=-2; i<count && status; i++) {
+        const uint16_t txdata = (i == -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
+        uint16_t rxdata;
+        status = hdlr->spi_transcieve(&txdata, &rxdata, sizeof(uint16_t));
+        // The first 2xuint16_t words are discarded (preamble reply and dummy word)
         if(i >= 0) {
             data[i] = __builtin_bswap16(rxdata);
         }
@@ -189,9 +189,9 @@ static bool read_data(stIT8951_Handler_t *hdlr, u16 *const data, const u32 count
 /// @param reg Register to write to
 /// @param val Value to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool write_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t reg, const u16 val) {
+static inline bool write_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t reg, const uint16_t val) {
     assert(IsEnum_IT8951_Register(reg));
-    return send_command_args(hdlr, IT8951_COMMAND_REG_WR, (u16[]){reg, val}, 2);
+    return send_command_args(hdlr, IT8951_COMMAND_REG_WR, (uint16_t[]){reg, val}, 2);
 }
 
 /// @brief Reads a word from a register
@@ -199,9 +199,9 @@ static inline bool write_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t 
 /// @param reg Register to read from
 /// @param val Buffer to store the register's value in
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool read_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t reg, u16 *const val) {
+static inline bool read_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t reg, uint16_t *const val) {
     assert(IsEnum_IT8951_Register(reg));
-    return send_command_args(hdlr, IT8951_COMMAND_REG_RD, (u16[]){reg}, 1) &&
+    return send_command_args(hdlr, IT8951_COMMAND_REG_RD, (uint16_t[]){reg}, 1) &&
            read_data(hdlr, val, 1);
 }
 
@@ -209,7 +209,7 @@ static inline bool read_reg(stIT8951_Handler_t *hdlr, const eIT8951_Register_t r
 /// @param hdlr Pointer to the IT8951 handler
 /// @return True if the SPI transaction succeeded, false otherwise
 static bool wait_for_display_ready(stIT8951_Handler_t *hdlr) {
-    u16 status = USHRT_MAX;
+    uint16_t status = USHRT_MAX;
     bool ret = false;
 
     do {
@@ -227,7 +227,7 @@ static bool load_img_area_start(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
                rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
         return false;
     }
-    const u16 args[] = {*(u16*)img_info, rect->x, rect->y, rect->width, rect->height};
+    const uint16_t args[] = {*(uint16_t*)img_info, rect->x, rect->y, rect->width, rect->height};
     return send_command_args(hdlr, IT8951_COMMAND_LD_IMG_AREA, args, ARRAY_LENGTH(args));
 }
 
@@ -236,7 +236,7 @@ static inline bool load_img_end(stIT8951_Handler_t *hdlr) {
 }
 
 bool it8951_set_i80_packed_mode(stIT8951_Handler_t *hdlr, const bool enable) {
-    return write_reg(hdlr, IT8951_REGISTER_I80CPCR, (const u16)enable);
+    return write_reg(hdlr, IT8951_REGISTER_I80CPCR, (const uint16_t)enable);
 } 
 
 bool it8951_sleep(stIT8951_Handler_t *hdlr) {
@@ -256,9 +256,9 @@ bool it8951_system_run(stIT8951_Handler_t *hdlr) {
 /// @param hdlr Pointer to the IT8951 handler
 /// @param vcom_mv Buffer to store the VCOM voltage in
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_get_vcom(stIT8951_Handler_t *hdlr, i32 *vcom_mv) {
-    u16 vcom = USHRT_MAX;
-    const bool ret = send_command_args(hdlr, IT8951_COMMAND_CMD_VCOM, (u16[]){0}, 1) &&
+bool it8951_get_vcom(stIT8951_Handler_t *hdlr, int32_t *vcom_mv) {
+    uint16_t vcom = USHRT_MAX;
+    const bool ret = send_command_args(hdlr, IT8951_COMMAND_CMD_VCOM, (uint16_t[]){0}, 1) &&
                      read_data(hdlr, &vcom, 1);
     *vcom_mv = -vcom;
     return ret;
@@ -269,24 +269,24 @@ bool it8951_get_vcom(stIT8951_Handler_t *hdlr, i32 *vcom_mv) {
 /// @param vcom_mv VCOM voltage in mV. Must be negative!
 /// @param store_to_flash True stores the vcom_mv to flash, false only to RAM
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_set_vcom(stIT8951_Handler_t *hdlr, const i32 vcom_mv, bool store_to_flash) {
+bool it8951_set_vcom(stIT8951_Handler_t *hdlr, const int32_t vcom_mv, bool store_to_flash) {
     assert(vcom_mv < 0);
-    const u16 arg = (u16)store_to_flash+1;
+    const uint16_t arg = (uint16_t)store_to_flash+1;
     // VCOM must be written as -1.50 -> 1500 = 0x62C ->[0x06, 0x2C]
-    return send_command_args(hdlr, IT8951_COMMAND_CMD_VCOM, (u16[]){arg, (u16)(-vcom_mv)}, 2);
+    return send_command_args(hdlr, IT8951_COMMAND_CMD_VCOM, (uint16_t[]){arg, (uint16_t)(-vcom_mv)}, 2);
 }
 
 bool it8951_set_power(stIT8951_Handler_t *hdlr, const bool on) {
-    return send_command_args(hdlr, IT8951_COMMAND_POWER_SEQUENCE, (u16[]){on}, 1);
+    return send_command_args(hdlr, IT8951_COMMAND_POWER_SEQUENCE, (uint16_t[]){on}, 1);
 }
 
 bool it8951_get_device_info(stIT8951_Handler_t *hdlr, stIT8951_DeviceInfo_t *dev_info) {
     return send_command(hdlr, IT8951_COMMAND_GET_DEV_INFO) &&
-           read_data(hdlr, (u16*)dev_info, sizeof(stIT8951_DeviceInfo_t)/2);
+           read_data(hdlr, (uint16_t*)dev_info, sizeof(stIT8951_DeviceInfo_t)/2);
 }
 
 bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle *const rect, eIT8951_DisplayMode_t display_mode){
-    const u16 args[] = {rect->x, rect->y, rect->width, rect->height, display_mode};
+    const uint16_t args[] = {rect->x, rect->y, rect->width, rect->height, display_mode};
     return wait_for_display_ready(hdlr) && 
            send_command_args(hdlr, IT8951_COMMAND_DPY_AREA, args, ARRAY_LENGTH(args));
 }
@@ -297,7 +297,7 @@ bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle *const rect
 /// @param mode Display mode to use for the update
 /// @param colour Colour to fill the rectangle with. Must be <= 8bpp
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, eIT8951_DisplayMode_t mode, u8 colour){
+bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, eIT8951_DisplayMode_t mode, uint8_t colour){
     assert(rect);
     assert(IsEnum_IT8951_DisplayMode(mode));
 
@@ -308,8 +308,8 @@ bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, e
         return false;
     }
     // Refresh EPD and change image buffer content with the assigned colour
-    const u16 arg4 = 0x1100 | mode;
-    const u16 args[] = {rect->x, rect->y, rect->width, rect->height, arg4, colour};
+    const uint16_t arg4 = 0x1100 | mode;
+    const uint16_t args[] = {rect->x, rect->y, rect->width, rect->height, arg4, colour};
     return send_command_args(hdlr, IT8951_COMMAND_DPY_AREA, args, ARRAY_LENGTH(args));
 }
 
@@ -317,8 +317,8 @@ bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, e
 /// @param hdlr Pointer to the IT8951 handler
 /// @param temp Temperature in C
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_force_set_temperature(stIT8951_Handler_t *hdlr, const u16 temp) {
-    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (u16[]){1, temp}, 2);
+bool it8951_force_set_temperature(stIT8951_Handler_t *hdlr, const uint16_t temp) {
+    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (uint16_t[]){1, temp}, 2);
 }
 
 /// @brief Gets the real and forced temperature readings from the IT8951.
@@ -327,8 +327,8 @@ bool it8951_force_set_temperature(stIT8951_Handler_t *hdlr, const u16 temp) {
 /// is the real temperature, and the second is the forced one. If the temperature
 /// value is forced, the 2nd temp element is meaningless
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_get_temperature(stIT8951_Handler_t *hdlr, u16 *temp) {
-    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (u16[]){0}, 1) &&
+bool it8951_get_temperature(stIT8951_Handler_t *hdlr, uint16_t *temp) {
+    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (uint16_t[]){0}, 1) &&
            // TODO: The datasheet is ambiguous about the order of the real and 
            // forced temperatures
            read_data(hdlr, temp, 2);
@@ -337,7 +337,7 @@ bool it8951_get_temperature(stIT8951_Handler_t *hdlr, u16 *temp) {
 /// @brief After a forced (fixed) temperature settings this command ensures that
 /// the IT8951 continues to read the real temperature sensor.
 bool it8951_cancel_force_temperature(stIT8951_Handler_t *hdlr) {
-    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (u16[]){2}, 1);
+    return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (uint16_t[]){2}, 1);
 }
 
 /// @brief This command was designed for 2 bpp image display. Without this 
@@ -347,14 +347,14 @@ bool it8951_cancel_force_temperature(stIT8951_Handler_t *hdlr) {
 /// @param is_2bpp True for 2bpp, false for all other
 /// @return True if the SPI transaction succeeded, false otherwise
 bool it8951_set_bpp_mode(stIT8951_Handler_t *hdlr, bool is_2bpp) {
-    return send_command_args(hdlr, IT8951_COMMAND_BPP_SETTINGS, (u16[]){is_2bpp}, 1);
+    return send_command_args(hdlr, IT8951_COMMAND_BPP_SETTINGS, (uint16_t[]){is_2bpp}, 1);
 }
 
-bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const u32 addr) {
+bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const uint32_t addr) {
     // The address must be <26bits
     assert(addr < (1UL << 26));
-    const u16 addr_h = (u16)(addr >> 16);
-    const u16 addr_l = (u16)(addr);
+    const uint16_t addr_h = (uint16_t)(addr >> 16);
+    const uint16_t addr_l = (uint16_t)(addr);
     return write_reg(hdlr, IT8951_REGISTER_LISAR,   addr_l) &&
            write_reg(hdlr, IT8951_REGISTER_LISAR+2, addr_h);
 }
@@ -367,7 +367,7 @@ bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const u32 addr) 
 /// @param rect Pointer to the rectangle on the screen to write the pixels to
 /// @param ppixels Pointer to the packed pixels to write
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle *const rect, const u16 *const ppixels, const u32 count) {
+bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle *const rect, const uint16_t *const ppixels, const uint32_t count) {
     assert(hdlr && img_info && rect && ppixels);
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
@@ -380,7 +380,7 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
     }
 
     return load_img_area_start(hdlr, img_info, rect) && 
-           write_bytes(hdlr, (u8*)ppixels, count) && 
+           write_bytes(hdlr, (uint8_t*)ppixels, count) && 
            load_img_end(hdlr);
 }
 
@@ -393,7 +393,7 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
 /// @param x X coordinate to load the BMP at
 /// @param y Y coordinate to load the BMP at
 /// @return 
-bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const u16 x, const u16 y){
+bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint16_t x, const uint16_t y){
     FILE *img = fopen(bmp, "rb");
     if(img == NULL){
         printf("Failed to open the BMP file");
@@ -408,8 +408,8 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const u16 
             return false;
         }
 
-        u32 pix_arr_offset, width, height;
-        u16 bpp;
+        uint32_t pix_arr_offset, width, height;
+        uint16_t bpp;
         // byte [10:13] encodes the bitmap byte array offset in the image
         // byte [10:13] encodes the bitmap width in pixels
         // byte [22:25] encodes the bitmap height in pixels
@@ -427,7 +427,7 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const u16 
         assert(bpp == 4);
 
         const size_t img_size = (width*height*bpp)/8;
-        u8 *buff = malloc(img_size);
+        uint8_t *buff = malloc(img_size);
         fseek(img, pix_arr_offset, SEEK_SET);
         fread(buff, sizeof(*buff), img_size, img);
         fclose(img);
@@ -439,11 +439,11 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const u16 
             .endianness = IT8951_ENDIANNESS_LITTLE,
         };
         // If the BMP's width/height cannot fit on the screen, this will fail.
-        return it8951_write_packed_pixels(hdlr, &img_info, &rect, (u16*)buff, img_size/2);
+        return it8951_write_packed_pixels(hdlr, &img_info, &rect, (uint16_t*)buff, img_size/2);
     }
 }
 
-/// @brief Packs the pixels contained in a u8 array into 16bit words, that can
+/// @brief Packs the pixels contained in a uint8_t array into 16bit words, that can
 /// directly be transferred to the IT8951
 /// @param img_info Pointer to the Image Info struct
 /// @param rect Rectangle to pack the pixels into.
@@ -451,7 +451,7 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const u16 
 /// the rectangle are ignored
 /// @param out_words [out] Must be at least (x+start_pad+end_pad)/4*y long and
 /// can be left uninitialized by the caller
-void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const rect, const u8 *const in_pix, u16 *const out_words) {
+void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const rect, const uint8_t *const in_pix, uint16_t *const out_words) {
     // TODO: Generalise it to other bpps
     // The following alignment rules must be met:
     // 2bpp -> start_x % 8 = 0, end_x % 8 = 0
@@ -461,27 +461,27 @@ void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
 
-    const u32 pix_per_byte  = it8951_get_pixel_per_byte(img_info->bpp);
+    const uint32_t pix_per_byte  = it8951_get_pixel_per_byte(img_info->bpp);
 
     if(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT && img_info->endianness == IT8951_ENDIANNESS_LITTLE) {
-        const u32 end_mod   = (rect->x + rect->width) % pix_per_byte;
-        const u32 start_pad = rect->x % pix_per_byte;
-        const u32 end_pad   = (end_mod == 0) ? 0 : (pix_per_byte - end_mod);
-        // (x+start_pad+end_pad)/4*y is the number of u16 words the rectangle is 
+        const uint32_t end_mod   = (rect->x + rect->width) % pix_per_byte;
+        const uint32_t start_pad = rect->x % pix_per_byte;
+        const uint32_t end_pad   = (end_mod == 0) ? 0 : (pix_per_byte - end_mod);
+        // (x+start_pad+end_pad)/4*y is the number of uint16_t words the rectangle is 
         // encoded on, taking the alignment rules into account
-        const u32 word_cnt = ((rect->width+start_pad+end_pad)*rect->height)/pix_per_byte;
-        const u32 word_per_row = word_cnt/rect->height;
+        const uint32_t word_cnt = ((rect->width+start_pad+end_pad)*rect->height)/pix_per_byte;
+        const uint32_t word_per_row = word_cnt/rect->height;
 
         // Ensure that the padding is zeroed out
         memset(out_words, 0, word_cnt*sizeof(*out_words));
 
         // Note: in_pix will naturally be only accessed in the valid range due 
         // to the padding
-        u32 idx = 0;
-        for(u32 w=0; w<word_cnt; w++) {
+        uint32_t idx = 0;
+        for(uint32_t w=0; w<word_cnt; w++) {
             // If this is the first word in the row, pad the beginning
-            const u32 mod = w % word_per_row;
-            u32 low_bound, high_bound;
+            const uint32_t mod = w % word_per_row;
+            uint32_t low_bound, high_bound;
             if(mod == 0){
                 low_bound  = start_pad;
                 high_bound = pix_per_byte;
@@ -494,8 +494,8 @@ void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const
                 low_bound  = 0;
                 high_bound = pix_per_byte;
             }
-            for(u32 p=low_bound; p<high_bound; p++) {
-                out_words[w] |= ((u16)in_pix[idx++] << (4*p));
+            for(uint32_t p=low_bound; p<high_bound; p++) {
+                out_words[w] |= ((uint16_t)in_pix[idx++] << (4*p));
             }
         }
     }
@@ -530,7 +530,7 @@ bool it8951_init(stIT8951_Handler_t *hdlr) {
         .height = hdlr->device_info.panel_height
     };
 
-    i32 rxvcom_mv = 0; 
+    int32_t rxvcom_mv = 0; 
     if(!it8951_get_vcom(hdlr, &rxvcom_mv))
         goto Terminate;
 

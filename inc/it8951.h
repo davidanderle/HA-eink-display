@@ -5,13 +5,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// TODO: Put to utilites.h
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t  u8;
-typedef int32_t  i32;
-typedef int16_t  i16;
-
 #define IS_WITHIN_RANGE(x, low, high) ((x) >= (low) && (x) <= (high))
 #define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof(arr[0]))
 #define CEIL_DIV2(x) (((x) + 1) >> 2)
@@ -168,8 +161,8 @@ typedef enum eIT8951_ColorDepth {
     IT8951_COLOR_DEPTH_BPP_1BIT = 4
 } eIT8951_ColorDepth_t;
 #define IsEnum_IT8951_ColorDepth(e) ((e) <= IT8951_COLOR_DEPTH_BPP_1BIT)
-#define IT8951_BPP_PER_BYTE_MAP ((u32[]){4, 2, 2, 1, 8})
-#define IT8951_BPP_CODE_MAP ((i32[]){-1,                          \
+#define IT8951_BPP_PER_BYTE_MAP ((uint32_t[]){4, 2, 2, 1, 8})
+#define IT8951_BPP_CODE_MAP ((int32_t[]){-1,                          \
                                      IT8951_COLOR_DEPTH_BPP_1BIT, \
                                      IT8951_COLOR_DEPTH_BPP_2BIT, \
                                      IT8951_COLOR_DEPTH_BPP_3BIT, \
@@ -205,17 +198,17 @@ typedef enum eIT8951_DisplayMode {
 #define IsEnum_IT8951_DisplayMode(e) ((e) <= IT8951_DISPLAY_MODE_DU4)
 
 typedef struct __attribute__((packed, aligned(2))) stIT8951_DeviceInfo {
-    u16 panel_width;
-    u16 panel_height;
-    u32 img_buff_addr;
+    uint16_t panel_width;
+    uint16_t panel_height;
+    uint32_t img_buff_addr;
     char firmware_version[16];
     char lut_version[16];
 } stIT8951_DeviceInfo_t;
 static_assert(sizeof(stIT8951_DeviceInfo_t) == 40);
 
-// TODO: Check if this is u16
+// TODO: Check if this is uint16_t
 typedef struct __attribute__((packed)) stRectangle {
-    u16 x, y, width, height;
+    uint16_t x, y, width, height;
 } stRectangle;
 static_assert(sizeof(stRectangle) == 8);
 
@@ -242,7 +235,7 @@ typedef struct stIT8951_Handler {
     /// INT_MAX if the default VCOM voltage is to be kept. Note that the IT8951
     /// development boards ship with waveforms that are tuned to a specific vcom
     /// voltage. Therefore setting this may mess up the drawn pixels.
-    i32 vcom_mv;
+    int32_t vcom_mv;
     stIT8951_DeviceInfo_t device_info;
     stRectangle panel_area;
 } stIT8951_Handler_t;
