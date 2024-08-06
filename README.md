@@ -2,7 +2,7 @@
 I started this project on 27 Aug 2023 and is a work in progress. My original attempt was to write the firmware in MicroPython using the LVGL graphics library, but alas after painful trials it turned out that LVGL's MicroPython port is not yet ready to to run on the ESP32-S3 chip. One legacy of this experiment is that now there is a MicroPython driver for the IT8951 chip to drive eink displays on one of the project's branches (TODO link).
 
 # Goal
-A thin, light-weight, battery-driven, E-Ink-based [Home Assistant](https://www.home-assistant.io/) display that acts as a BLE slave and displays data like calendar events from 2 accounts, our home's current day energy/water consumtion, commuting travel times, and other things.
+A thin, light-weight, battery-driven, E-Ink-based [Home Assistant](https://www.home-assistant.io/) display that acts as a BLE peripheral (GATT server) and displays data like calendar events from 2 accounts, our home's current day energy/water consumtion, commuting travel times, and other things.
 
 # Hardware setup
 1. Set the dip-switches into a 0b001 position (sw3 at ON position) to enable the SPI Slave communication. This is counter-intuitive as sw1 should've been bit0...
