@@ -22,12 +22,14 @@ static int gatt_svr_chr_access_custom(uint16_t conn_handle, uint16_t attr_handle
                                       struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int gatt_svr_dsc_access_custom(uint16_t conn_handle, uint16_t attr_handle,
                                       struct ble_gatt_access_ctxt *ctxt, void *arg);
-static int ble_svc_bas_access(uint16_t conn_handle, uint16_t attr_handle,
+static int gatt_svr_svc_bas_access(uint16_t conn_handle, uint16_t attr_handle,
                               struct ble_gatt_access_ctxt *ctxt, void *arg);
-static int ble_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle,
+static int gatt_svr_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle,
                               struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 void ble_store_config_init(void);
+
+static uint16_t ble_svc_chr_custom_val_handle;
 
 // Custom UUIDs obtained from: https://www.uuidgenerator.net/
 // Service UUID128: 6ff79d5c-e899-4531-90d8-5cc8adcf65a2
@@ -40,41 +42,8 @@ static const ble_uuid128_t gatt_svr_chr_custom_uuid =
                      0xe7,0x48,0x39,0x60,0x88,0x08,0x2f,0xd5);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-    // Device Information Service
-    {
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_UUID16),
-        .characteristics = (struct ble_gatt_chr_def[]) {
-            {
-                .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME),
-                .access_cb = ble_svc_dis_access,
-                .flags = BLE_GATT_CHR_F_READ
-            },
-            {
-                .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_SOFTWARE_REVISION),
-                .access_cb = ble_svc_dis_access,
-                .flags = BLE_GATT_CHR_F_READ
-            },
-            // No more characteristics in this service
-            {0}
-        }
-    },
-    // Battery service
-    {
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = BLE_UUID16_DECLARE(BLE_SVC_BAS_UUID16),
-        .characteristics = (struct ble_gatt_chr_def[]) {
-            {
-                .uuid = BLE_UUID16_DECLARE(BLE_SVC_BAS_CHR_UUID16_BATTERY_LEVEL),
-                // TODO: Why is there a value handle and the access callback?
-                .access_cb = ble_svc_bas_access,
-                //.val_handle = &ble_svc_bas_battery_level_handle,
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
-            },
-            // No more characteristics in this service
-            {0}
-        }
-    },
+    // Device Information Service (supported by ble_svc_dis.c)
+    // Battery service (supported by ble_svc_bas.c)
     // Custom service for HA to send data to display
     {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -83,7 +52,9 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             {
                 .uuid = &gatt_svr_chr_custom_uuid.u,
                 .access_cb = gatt_svr_chr_access_custom,
-                .flags = BLE_GATT_CHR_F_WRITE_ENC,
+                // TODO: Encrypted writing does not work
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_WRITE_ENC,
+                .val_handle = &ble_svc_chr_custom_val_handle,
                 .descriptors = (struct ble_gatt_dsc_def[]) {
                     {
                         .uuid = BLE_UUID16_DECLARE(BLE_UUID_DESC_CUSTOM_CHAR_NAME),
@@ -102,7 +73,6 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {0}
 };
 
-// TODO: This is not showing up in the Bluefruit Connect iOS app!
 static int gatt_svr_dsc_access_custom(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     static const char *custom_descriptor = "HA Interface";
     if(ble_uuid_cmp(ctxt->dsc->uuid, BLE_UUID16_DECLARE(BLE_UUID_DESC_CUSTOM_CHAR_NAME)) == 0) {
@@ -111,33 +81,39 @@ static int gatt_svr_dsc_access_custom(uint16_t conn_handle, uint16_t attr_handle
     return BLE_ATT_ERR_UNLIKELY;
 }
 
-
-static int ble_svc_bas_access(uint16_t con_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    // TODO:
-    assert(0);
-    return 0;
-    //return os_mbuf_append(ctxt->om, &timestamp_value, sizeof(uint16_t));
-}
-static int ble_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    // TODO:
-    assert(0);
-    return 0;
-}
+//static int gatt_svr_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+//    // Handle read requests
+//    if(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
+//        // Read manufacturer name
+//        if(attr_handle == ble_svc_dis_chr_manu_name_val_handle) {
+//            return os_mbuf_append(ctxt->om, ble_svc_dis_manufacturer_name(),
+//                            strlen(ble_svc_dis_manufacturer_name()));
+//        // Read software revision
+//        } else if(attr_handle == ble_svc_dis_chr_soft_rev_val_handle) {
+//            return os_mbuf_append(ctxt->om, ble_svc_dis_software_revision(),
+//                            strlen(ble_svc_dis_software_revision()));
+//        }
+//    }
+//    // Handle write requests (not applicable for DIS)
+//    return BLE_ATT_ERR_UNLIKELY;
+//}
 
 static int gatt_svr_chr_access_custom(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            uint16_t len = OS_MBUF_PKTLEN(ctxt->om);
-            // TODO: What is the maximum size of a packet?
-            uint8_t *buf = malloc(len);
-            if(!buf) {
-                return BLE_ERR_MEM_CAPACITY;
+            char buf[1024]; // TODO: Change this to wchar_t
+            const uint16_t len = OS_MBUF_PKTLEN(ctxt->om);
+            if(len >= sizeof(buf)){
+                ESP_LOGE(tag, "BLE size not supported");
             }
-            const int rc = ble_hs_mbuf_to_flat(ctxt->om, buf, len, &len);
+            const int rc = os_mbuf_copydata(ctxt->om, 0, len, buf);
             if(rc == 0){
-                // TODO: Process data
+                buf[len] = "\0";
+                ESP_LOGI(tag, "Received data: %s", buf);
+            } else {
+                ESP_LOGE(tag, "Failed to copy data. Requested len: %d", len);
+                return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             }
-            free(buf);
             return rc;
         default:
             assert(0);
