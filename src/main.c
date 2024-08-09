@@ -1,4 +1,5 @@
 #include <limits.h>
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "ble.h"
@@ -15,6 +16,11 @@ static void display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     
     // This function must be called when the display has been updated
     lv_disp_flush_ready(disp);
+}
+
+static inline uint32_t custom_tick_get(void) {
+    // The function returns a int64_t in [us], so we cast to [ms] 
+    return (uint32_t)(esp_timer_get_time()/1000);
 }
 
 // TODO: Try to speed up compilation by removing unnecessary components
@@ -34,8 +40,7 @@ void app_main(void) {
 
     lv_init();
 
-    // TODO: May need to set the tick callback for this
-    //lv_tick_set_cb();
+    lv_tick_set_cb(custom_tick_get);
 
     // Create the display and attach the displaying function
     lv_display_t *disp = lv_display_create(1404, 1872);
@@ -51,7 +56,7 @@ void app_main(void) {
     // Enter a 1ms background loop (this is not required if the setup is complete)
     while(true) {
         lv_task_handler();
-        vTaskDelay(1/portTICK_PERIOD_MS);
+        lv_timer_handler();
     }
 
     lv_deinit();
