@@ -222,7 +222,7 @@ static bool wait_for_display_ready(stIT8951_Handler_t *hdlr) {
 static bool load_img_area_start(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle *const rect) {
     assert(img_info && rect);
     if(!rectangle_is_contained_within(rect, &hdlr->panel_area)) {
-        printf("Rectangle \n%s\n is not within the panel area \n%s", 
+        printf("Rectangle \n%s\n is not within the panel area %s\n", 
                rectangle_to_string(rect, (char[53]){0}), 
                rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
         return false;
@@ -302,7 +302,7 @@ bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, e
     assert(IsEnum_IT8951_DisplayMode(mode));
 
     if(!rectangle_is_contained_within(rect, &hdlr->panel_area)){
-        printf("Rectangle \n%s\n is not within the panel area \n%s", 
+        printf("Rectangle \n%s\n is not within the panel area %s\n", 
                rectangle_to_string(rect, (char[53]){0}), 
                rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
         return false;
@@ -373,7 +373,7 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
 
     if(!rectangle_is_contained_within(rect, &hdlr->panel_area)){
-        printf("Rectangle \n%s\n is not within the panel area \n%s", 
+        printf("Rectangle \n%s\n is not within the panel area %s\n", 
                rectangle_to_string(rect, (char[53]){0}), 
                rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
         return false;
@@ -396,14 +396,14 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
 bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint16_t x, const uint16_t y){
     FILE *img = fopen(bmp, "rb");
     if(img == NULL){
-        printf("Failed to open the BMP file");
+        printf("Failed to open the BMP file\n");
         return false;
     } else {
         // Read the header. See https://en.wikipedia.org/wiki/BMP_file_format)
         char header[2];
         fread(header, sizeof(char), 2, img);
         if(header[0] != 'B' || header[1] != 'M'){
-            printf("Invalid BMP file");
+            printf("Invalid BMP file\n");
             fclose(img);
             return false;
         }
@@ -508,7 +508,7 @@ void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const
 /// @param hdlr Pointer to the handler struct
 /// @return True if the SPI transaction succeeded, false otherwise
 bool it8951_init(stIT8951_Handler_t *hdlr) {
-    printf("Initialising IT8951...");
+    printf("Initialising IT8951...\n");
 
     if(!it8951_get_device_info(hdlr, &hdlr->device_info) || 
        hdlr->device_info.panel_height == 0 || hdlr->device_info.panel_width)
@@ -517,7 +517,7 @@ bool it8951_init(stIT8951_Handler_t *hdlr) {
     }
 
     char dev_info_str[256];
-    printf("%s", it8951_device_info_to_string(&hdlr->device_info, dev_info_str));
+    printf("%s\n", it8951_device_info_to_string(&hdlr->device_info, dev_info_str));
     
     if(!it8951_set_img_buff_base_address(hdlr, hdlr->device_info.img_buff_addr))
         goto Terminate;
@@ -534,16 +534,16 @@ bool it8951_init(stIT8951_Handler_t *hdlr) {
     if(!it8951_get_vcom(hdlr, &rxvcom_mv))
         goto Terminate;
 
-    printf("Current VCOM = %f", (rxvcom_mv/1000.0f));
+    printf("Current VCOM = %f\n", (rxvcom_mv/1000.0f));
 
     if(hdlr->vcom_mv != INT_MAX && rxvcom_mv != hdlr->vcom_mv){
-        printf("Setting VCOM to user-specified %f", (hdlr->vcom_mv/1000.0f));
+        printf("Setting VCOM to user-specified %f\n", (hdlr->vcom_mv/1000.0f));
         if(!it8951_set_vcom(hdlr, hdlr->vcom_mv, false))
             goto Terminate;
     }
     
     return true;
 Terminate:
-    printf("Communication with the IT8951 over SPI failed");
+    printf("Communication with the IT8951 over SPI failed\n");
     return false;
 }
