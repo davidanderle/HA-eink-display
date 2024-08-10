@@ -4,6 +4,21 @@
 #include <string.h>
 #include "it8951.h"
 
+// TODO: replace stIT8951_Handler with struct it8951_handle
+// TODO: replace eIT8951_* with enum it8951_*
+
+// If the UNIT_TEST macro is defined, the TESABLE keyword before some functions
+// is replaced with nothing. However, during normal build, when UNIT_TEST is not
+// defined, the static keyword is present. This allows the testing suit to use
+// something like "extern void function_to_test(void)" in the test_file.c.
+// Note that PIO automatically builds the files with this switch during tests.
+// TODO:
+#ifdef UNIT_TEST
+#define TESTABLE
+#else
+#define TESTABLE
+#endif
+
 static inline uint32_t it8951_get_pixel_per_byte(eIT8951_ColorDepth_t bpp) {
     assert(IsEnum_IT8951_ColorDepth(bpp));
     return IT8951_BPP_PER_BYTE_MAP[bpp];
@@ -73,7 +88,7 @@ static inline void wait_ready(stIT8951_Handler_t *hdlr) {
     while(hdlr->get_hrdy() == 0);
 }
 
-static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const uint32_t count) {
+TESTABLE bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const int32_t count) {
     assert(hdlr);
     assert(IsEnum_IT8951_SpiPreamble(preamble));
 
@@ -120,7 +135,7 @@ static inline bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const da
 /// @param data Pre-formatted data bytes. Endianness depends on ImageInfo
 /// @param count Number of bytes to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const uint32_t count) {
+TESTABLE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const uint32_t count) {
     assert(hdlr && data);
 
     const size_t txsize = count*sizeof(uint8_t)+sizeof(uint16_t); 
@@ -158,7 +173,7 @@ static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Com
 /// store count*2byte of data.
 /// @param count Number of 16bit words to read
 /// @return True if the SPI transaction succeeded, false otherwise
-static bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const uint32_t count) {
+TESTABLE bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const uint32_t count) {
     assert(hdlr && data);
     
     bool status = true;
