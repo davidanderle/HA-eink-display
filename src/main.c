@@ -10,6 +10,7 @@
 
 // TODO: Using TinyUSB, an USB mass storage device should be implemented to
 // store json files that are displayed on the UI. This setup is rather involved.
+// TODO: Separate the IT8951 in a git submodule and add it as a library
 
 static void display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
     const uint32_t w = lv_area_get_width(area);
