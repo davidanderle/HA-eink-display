@@ -72,7 +72,7 @@ void suiteSetUp(void) {
 
 void test_send_command(const eIT8951_Command_t cmd, uint8_t *expected_tx) {
     const size_t size = (1+1)*sizeof(uint16_t);
-    _txdata = calloc(size, sizeof(uint8_t));
+    _txdata = calloc(size, sizeof(*_txdata));
     _txcount = 0;
     if(_txdata) {
         TEST_ASSERT_TRUE(ncs);
@@ -93,7 +93,7 @@ void test_send_command_multiple_args(void) {
 
 void test_write_data(const uint16_t *const data, int32_t count, uint8_t *expected_tx) {
     const size_t size = (1+count)*sizeof(uint16_t);
-    _txdata = calloc(size, sizeof(uint8_t));
+    _txdata = calloc(size, sizeof(*_txdata));
     _txcount = 0;
     if(_txdata) {
         TEST_ASSERT_TRUE(ncs);
