@@ -7,16 +7,18 @@
 // TODO: replace stIT8951_Handler with struct it8951_handle
 // TODO: replace eIT8951_* with enum it8951_*
 
-// If the UNIT_TEST macro is defined, the TESABLE keyword before some functions
-// is replaced with nothing. However, during normal build, when UNIT_TEST is not
-// defined, the static keyword is present. This allows the testing suit to use
-// something like "extern void function_to_test(void)" in the test_file.c.
+// If the PIO_UNIT_TESTING macro is defined, the STATIC/INLINE keywords before
+// some functions is replaced with nothing. However, during normal build, when 
+// PIO_UNIT_TESTING is not defined, these keywords are present. This allows 
+// the testing suit to use something like "extern void function_to_test(void)" 
+// in the test_file.c.
 // Note that PIO automatically builds the files with this switch during tests.
-// TODO:
-#ifdef UNIT_TEST
-#define TESTABLE
+#ifdef PIO_UNIT_TESTING
+#define STATIC
+#define INLINE
 #else
-#define TESTABLE
+#define STATIC static
+#define INLINE inline
 #endif
 
 static inline uint32_t it8951_get_pixel_per_byte(eIT8951_ColorDepth_t bpp) {
