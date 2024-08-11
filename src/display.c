@@ -29,7 +29,7 @@ static inline bool it8951_get_hrdy(void) {
 }
 
 void display_init(void) {
-    ESP_ERROR_CHECK(spi_bus_initialize(SPI1_HOST, &(spi_bus_config_t){
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &(spi_bus_config_t){
         .miso_io_num = spi_miso,
         .mosi_io_num = spi_mosi,
         .sclk_io_num = spi_clk,
@@ -39,7 +39,7 @@ void display_init(void) {
         .max_transfer_sz = 4096,
     }, SPI_DMA_CH_AUTO));
 
-    ESP_ERROR_CHECK(spi_bus_add_device(SPI1_HOST, &(spi_device_interface_config_t){
+    ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &(spi_device_interface_config_t){
         .clock_speed_hz = 24000000,
         .mode = 0,
         .spics_io_num = -1, // Controlled externally
