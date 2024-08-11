@@ -100,6 +100,7 @@ static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamb
     if(count == 0) {
         return true;
     }
+    assert(data);
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
@@ -177,7 +178,7 @@ static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Com
 /// @param count Number of 16bit words to read
 /// @return True if the SPI transaction succeeded, false otherwise
 STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int32_t count) {
-    assert(hdlr && data);
+    assert(hdlr);
     
     bool status = true;
 
@@ -185,6 +186,7 @@ STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int3
     if(count == 0) {
         return true;
     }
+    assert(data);
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
