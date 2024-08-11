@@ -28,8 +28,6 @@ static inline uint32_t custom_tick_get(void) {
 }
 
 // TODO: Try to speed up compilation by removing unnecessary components
-// TODO: The serial output returns "ESP-IDF: 5.2.1", while the latest ESP-IDF is
-// 5.3 for the S3... Why is this the case? PIO seems updated
 void app_main(void) {
     //1872x1404
     // No need to worry about double-buffering as here FPS is not important...
