@@ -5,3 +5,4 @@ resources
 .vscode/*
 *.old
 lvgl_squareline
+.vscode/settings.json
