@@ -6,6 +6,8 @@
 #include "it8951.h"
 #include "test_it8951.h"
 
+static const char *tag = "TEST";
+
 // Expose the low-level testee functions from the driver
 extern bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd);
 extern bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const int32_t count);
@@ -15,18 +17,33 @@ extern bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const data, con
 /// @brief Used to store the current state of the nCS pin
 static bool ncs = 1;
 static uint8_t *_txdata;
+static uint16_t *_rxdata;
 static int _txcount = 0;
 
+// TODO: Should be able to do the _txdata allocation in the setup?
+
 static bool mock_spi_transcieve(const void *tx, void *rx, size_t len) {
+    // This big-endian buffer is simulateing data returned by the IT8951. Note:
+    // the first 4 bytes are dummy and should be ignored by the processing func
+    static const uint8_t rxdata[] = {0x00,0x00,0x00,0x00,0x12,0x34,0x00,0x00,0x7F,0xFF,0x80,0x00,0xFF,0xFF};
+    assert(len <= sizeof(rxdata));
+
     if(!_txdata) {
-        printf("TEST: rxdata buffer cannot be NULL\n");
+        ESP_LOGE(tag, "txdata buffer cannot be NULL");
         return false;
     } else {
         TEST_ASSERT_FALSE(ncs);
         memcpy(&_txdata[_txcount], tx, len);
+        if(rx){
+            memcpy(rx, &rxdata[_txcount], len);
+        }
         _txcount += len;
         for(uint32_t i=0; i<len; i++){
-            ESP_LOGI("TEST_SPI", "0x%02x", ((uint8_t*)tx)[i]);
+            if(rx) {
+                ESP_LOGI(tag, "tx: 0x%02x, rx: 0x%02x", ((uint8_t*)tx)[i], ((uint8_t*)rx)[i]);
+            } else {
+                ESP_LOGI(tag, "tx: 0x%02x", ((uint8_t*)tx)[i]);
+            }
         }
         return true;
     }
@@ -61,7 +78,7 @@ void test_send_command(const eIT8951_Command_t cmd, uint8_t *expected_tx) {
         TEST_ASSERT_TRUE(ncs);
         TEST_ASSERT_TRUE(send_command(&hdlr, cmd));
         TEST_ASSERT_TRUE(ncs);
-        TEST_ASSERT_EQUAL_UINT8_ARRAY(expected_tx, _txdata, size);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_tx, _txdata, size);
         free(_txdata);
     } else {
         printf("TEST: Insufficient memory!\n");
@@ -82,10 +99,10 @@ void test_write_data(const uint16_t *const data, int32_t count, uint8_t *expecte
         TEST_ASSERT_TRUE(ncs);
         TEST_ASSERT_TRUE(write_data(&hdlr, data, count));
         TEST_ASSERT_TRUE(ncs);
-        TEST_ASSERT_EQUAL_UINT8_ARRAY(expected_tx, _txdata, size);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_tx, _txdata, size);
         free(_txdata);
     } else {
-        printf("TEST: Insufficient memory!\n");
+        ESP_LOGE(tag, "Insufficient memory!");
     }
 }
 void test_write_data_multiple_args(void) {
@@ -97,6 +114,33 @@ void test_write_data_multiple_args(void) {
                     (uint8_t []){0x00, 0x00, 0xFF, 0xFF});
     test_write_data((uint16_t[]){}, 0, (uint8_t[]){});
 }
+
+void test_read_data(const int32_t count, uint8_t *expected_tx, uint16_t *expected_rx) {
+    const size_t size = (2+count)*sizeof(uint16_t);
+    _txdata = calloc(size, sizeof(*_txdata));
+    _rxdata = calloc(count, sizeof(*_rxdata));
+    _txcount = 0;
+    if(_txdata && (_rxdata || count == 0)) {
+        TEST_ASSERT_TRUE(ncs);
+        TEST_ASSERT_TRUE(read_data(&hdlr, _rxdata, count));
+        TEST_ASSERT_TRUE(ncs);
+        if(count != 0){
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_tx, _txdata, size);
+            TEST_ASSERT_EQUAL_HEX16_ARRAY(expected_rx, _rxdata, count);
+        }
+        free(_txdata);
+        free(_rxdata);
+    } else {
+        ESP_LOGE(tag, "Insufficient memory!");
+    }
+}
+void test_read_data_multiple_args(void) {
+    test_read_data(0, (uint8_t[]){}, 
+                      (uint16_t[]){});
+    test_read_data(1, (uint8_t[]){0x10,0x00,0x00,0x00,0x00,0x00}, 
+                      (uint16_t[]){0x1234});
+    test_read_data(5, (uint8_t[]){0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, 
+                      (uint16_t[]){0x1234, 0x0000, 0x7FFF, 0x8000, 0xFFFF});
 }
 
 // This is required for the ESP-IDF framework
@@ -105,6 +149,7 @@ void app_main() {
 
     RUN_TEST(test_send_command_multiple_args);
     RUN_TEST(test_write_data_multiple_args);
+    RUN_TEST(test_read_data_multiple_args);
 
     UNITY_END();
 }
