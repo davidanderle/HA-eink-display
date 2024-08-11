@@ -108,7 +108,7 @@ static int gatt_svr_chr_access_custom(uint16_t conn_handle, uint16_t attr_handle
             }
             const int rc = os_mbuf_copydata(ctxt->om, 0, len, buf);
             if(rc == 0){
-                buf[len] = "\0";
+                buf[len] = '\0';
                 ESP_LOGI(tag, "Received data: %s", buf);
             } else {
                 ESP_LOGE(tag, "Failed to copy data. Requested len: %d", len);
