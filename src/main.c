@@ -57,7 +57,7 @@ void app_main(void) {
 
     // Enter a 1ms background loop (this is not required if the setup is complete)
     while(true) {
-        vTaskDelay(100/portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(100));
         lv_timer_handler();
     }
 
