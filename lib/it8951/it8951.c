@@ -91,7 +91,7 @@ static inline void wait_ready(stIT8951_Handler_t *hdlr) {
     while(hdlr->get_hrdy() == 0);
 }
 
-TESTABLE bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const int32_t count) {
+static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const int32_t count) {
     assert(hdlr);
     assert(IsEnum_IT8951_SpiPreamble(preamble));
 
@@ -118,7 +118,7 @@ TESTABLE bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPrea
 /// @param hdlr Pointer to the IT8951 handler
 /// @param cmd Command to execute
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd) {
+STATIC INLINE bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd) {
     assert(IsEnum_eIT8951_Command(cmd));
     return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_COMMAND, (uint16_t[]){cmd}, 1);
 }
@@ -128,7 +128,7 @@ static inline bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_
 /// @param data An of uint16_t elements containing the data to be written.
 /// @param count Number of elements to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const data, const uint32_t count) {
+STATIC INLINE bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const data, const int32_t count) {
     return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_WRITE_DATA, data, count);
 }
 
@@ -138,7 +138,7 @@ static inline bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const da
 /// @param data Pre-formatted data bytes. Endianness depends on ImageInfo
 /// @param count Number of bytes to write
 /// @return True if the SPI transaction succeeded, false otherwise
-TESTABLE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const uint32_t count) {
+STATIC INLINE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const int32_t count) {
     assert(hdlr && data);
 
     const size_t txsize = count*sizeof(uint8_t)+sizeof(uint16_t); 
@@ -166,7 +166,7 @@ TESTABLE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, c
 /// @param data Data to send 
 /// @param count Number of words to write
 /// @return True if the SPI transaction succeeded, false otherwise
-static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd, const uint16_t *const data, const uint32_t count) {
+static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd, const uint16_t *const data, const int32_t count) {
     return send_command(hdlr, cmd) && write_data(hdlr, data, count);
 }
 
@@ -176,7 +176,7 @@ static inline bool send_command_args(stIT8951_Handler_t *hdlr, const eIT8951_Com
 /// store count*2byte of data.
 /// @param count Number of 16bit words to read
 /// @return True if the SPI transaction succeeded, false otherwise
-TESTABLE bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const uint32_t count) {
+STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int32_t count) {
     assert(hdlr && data);
     
     bool status = true;
