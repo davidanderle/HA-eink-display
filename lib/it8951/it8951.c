@@ -51,7 +51,7 @@ char *it8951_device_info_to_string(const stIT8951_DeviceInfo_t *const dev_info, 
 /// @brief Calculates the area of the rectangle
 /// @param rect Pointer to the rectangle
 /// @return Area of the rectangle
-__attribute__((const))
+__attribute__((pure))
 uint32_t rectangle_get_area(const stRectangle *const rect){
     return rect->width * rect->height;
 }
@@ -60,6 +60,7 @@ uint32_t rectangle_get_area(const stRectangle *const rect){
 /// @param rect1 Pointer to the first rectangle
 /// @param rect2 Pointer to the second rectangle
 /// @return True if the rectangles overlap, false otherwise
+__attribute__((pure))
 bool rectangle_is_contained_within(const stRectangle *const rect1, const stRectangle *const rect2) {
     return (rect1->x >= rect2->x &&
             rect1->y >= rect2->y &&
