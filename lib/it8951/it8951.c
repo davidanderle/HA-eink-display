@@ -189,7 +189,7 @@ STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int3
     wait_ready(hdlr);
     hdlr->set_ncs(0);
     for(int32_t i=-2; i<count && status; i++) {
-        const uint16_t txdata = (i == -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
+        const uint16_t txdata = (i != -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
         uint16_t rxdata;
         status = hdlr->spi_transcieve(&txdata, &rxdata, sizeof(uint16_t));
         // The first 2xuint16_t words are discarded (preamble reply and dummy word)
