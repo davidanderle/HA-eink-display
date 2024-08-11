@@ -54,7 +54,7 @@ char *it8951_device_info_to_string(const stIT8951_DeviceInfo_t *const dev_info, 
 /// @param rect Pointer to the rectangle
 /// @return Area of the rectangle
 __attribute__((pure))
-uint32_t rectangle_get_area(const stRectangle *const rect){
+uint32_t rectangle_get_area(const stRectangle_t *const rect){
     return rect->width * rect->height;
 }
 
@@ -63,7 +63,7 @@ uint32_t rectangle_get_area(const stRectangle *const rect){
 /// @param rect2 Pointer to the second rectangle
 /// @return True if the rectangles overlap, false otherwise
 __attribute__((pure))
-bool rectangle_is_contained_within(const stRectangle *const rect1, const stRectangle *const rect2) {
+bool rectangle_is_contained_within(const stRectangle_t *const rect1, const stRectangle_t *const rect2) {
     return (rect1->x >= rect2->x &&
             rect1->y >= rect2->y &&
             rect1->x + rect1->width  <= rect2->x + rect2->width &&
@@ -74,7 +74,7 @@ bool rectangle_is_contained_within(const stRectangle *const rect1, const stRecta
 /// @param rect Rectangle to stringify
 /// @param buff Buffer to store the string in. Must be at least 53 bytes.
 /// @return Pointer to the beginning of the buffer
-char *rectangle_to_string(const stRectangle *const rect, char *buff) {
+char *rectangle_to_string(const stRectangle_t *const rect, char *buff) {
     sprintf(buff, "(x,y): (%u,%u)\n"
                   "(w,h): (%u,%u)\n"
                   "Area: %lu", 
@@ -239,7 +239,7 @@ static bool wait_for_display_ready(stIT8951_Handler_t *hdlr) {
     return ret;
 }
 
-static bool load_img_area_start(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle *const rect) {
+static bool load_img_area_start(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect) {
     assert(img_info && rect);
     if(!rectangle_is_contained_within(rect, &hdlr->panel_area)) {
         printf("Rectangle \n%s\n is not within the panel area %s\n", 
@@ -305,7 +305,7 @@ bool it8951_get_device_info(stIT8951_Handler_t *hdlr, stIT8951_DeviceInfo_t *dev
            read_data(hdlr, (uint16_t*)dev_info, sizeof(stIT8951_DeviceInfo_t)/2);
 }
 
-bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle *const rect, eIT8951_DisplayMode_t display_mode){
+bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode){
     const uint16_t args[] = {rect->x, rect->y, rect->width, rect->height, display_mode};
     return wait_for_display_ready(hdlr) && 
            send_command_args(hdlr, IT8951_COMMAND_DPY_AREA, args, ARRAY_LENGTH(args));
@@ -317,7 +317,7 @@ bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle *const rect
 /// @param mode Display mode to use for the update
 /// @param colour Colour to fill the rectangle with. Must be <= 8bpp
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle *const rect, eIT8951_DisplayMode_t mode, uint8_t colour){
+bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t mode, uint8_t colour){
     assert(rect);
     assert(IsEnum_IT8951_DisplayMode(mode));
 
@@ -387,7 +387,7 @@ bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const uint32_t a
 /// @param rect Pointer to the rectangle on the screen to write the pixels to
 /// @param ppixels Pointer to the packed pixels to write
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle *const rect, const uint16_t *const ppixels, const uint32_t count) {
+bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint16_t *const ppixels, const uint32_t count) {
     assert(hdlr && img_info && rect && ppixels);
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
@@ -452,7 +452,7 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
         fread(buff, sizeof(*buff), img_size, img);
         fclose(img);
 
-        stRectangle rect = {x, y, width, height};
+        stRectangle_t rect = {x, y, width, height};
         stIT8951_ImageInfo_t img_info = {
             .rotation   = IT8951_ROTATION_MODE_0,
             .bpp        = IT8951_COLOR_DEPTH_BPP_4BIT,
@@ -471,7 +471,7 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
 /// the rectangle are ignored
 /// @param out_words [out] Must be at least (x+start_pad+end_pad)/4*y long and
 /// can be left uninitialized by the caller
-void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle *const rect, const uint8_t *const in_pix, uint16_t *const out_words) {
+void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle_t *const rect, const uint8_t *const in_pix, uint16_t *const out_words) {
     // TODO: Generalise it to other bpps
     // The following alignment rules must be met:
     // 2bpp -> start_x % 8 = 0, end_x % 8 = 0
@@ -543,7 +543,7 @@ bool it8951_init(stIT8951_Handler_t *hdlr) {
         goto Terminate;
     if(!it8951_set_i80_packed_mode(hdlr, true))
         goto Terminate;
-    hdlr->panel_area = (stRectangle){
+    hdlr->panel_area = (stRectangle_t){
         .x      = 0,
         .y      = 0,
         .width  = hdlr->device_info.panel_width,

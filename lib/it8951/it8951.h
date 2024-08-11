@@ -209,8 +209,8 @@ static_assert(sizeof(stIT8951_DeviceInfo_t) == 40);
 // TODO: Check if this is uint16_t
 typedef struct __attribute__((packed)) stRectangle {
     uint16_t x, y, width, height;
-} stRectangle;
-static_assert(sizeof(stRectangle) == 8);
+} stRectangle_t;
+static_assert(sizeof(stRectangle_t) == 8);
 
 // TODO: Ensure that the bit order is correct. This is undefined in C!
 typedef struct __attribute__((packed)) stIT8951_ImageInfo {
@@ -237,9 +237,10 @@ typedef struct stIT8951_Handler {
     /// voltage. Therefore setting this may mess up the drawn pixels.
     int32_t vcom_mv;
     stIT8951_DeviceInfo_t device_info;
-    stRectangle panel_area;
+    stRectangle_t panel_area;
 } stIT8951_Handler_t;
 
 bool it8951_init(stIT8951_Handler_t *hdlr);
+void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle_t *const rect, const uint8_t *const in_pix, uint16_t *const out_words);
 
 #endif
