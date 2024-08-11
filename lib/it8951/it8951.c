@@ -120,7 +120,7 @@ TESTABLE bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPrea
 /// @return True if the SPI transaction succeeded, false otherwise
 static inline bool send_command(stIT8951_Handler_t *hdlr, const eIT8951_Command_t cmd) {
     assert(IsEnum_eIT8951_Command(cmd));
-    return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_COMMAND, (uint16_t*)&cmd, 1);
+    return send_with_preamble(hdlr, IT8951_SPI_PREAMBLE_COMMAND, (uint16_t[]){cmd}, 1);
 }
 
 // TODO: write_data/write_bytes and the packed pixel transfer could be revisited
