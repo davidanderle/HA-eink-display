@@ -13,10 +13,15 @@ static const gpio_num_t spi_miso = 37;
 static const gpio_num_t spi_clk = 36;
 
 static inline bool it8951_transcieve(const void *txdata, void *rxdata, size_t len) {
-    return spi_device_transmit(spi, &(spi_transaction_t) {
+    // TODO: Could keep the CS active between transmissions! Would allow lower 
+    // power consumption .flags = SPI_TRANS_CS_KEEP_ACTIVE
+    // TODO: Is there a speed/power gain by using the .tx_data, .rx_data and 
+    // .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA for len <= 4?
+    // TODO: Implement queues to speed things up!
+    return spi_device_polling_transmit(spi, &(spi_transaction_t) {
         .length = len*8,
         .tx_buffer = txdata,
-        .rx_buffer = rxdata
+        .rx_buffer = rxdata,
     }) == ESP_OK;
 }
 
