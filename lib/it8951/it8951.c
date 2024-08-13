@@ -31,6 +31,22 @@ static inline uint32_t it8951_bpp_to_code(const uint32_t bpp) {
     return IT8951_BPP_CODE_MAP[bpp];
 }
 
+static void it8951_u16_arr_to_device_info(const uint16_t raw[20], stIT8951_DeviceInfo_t *const dev_info) {
+    dev_info->panel_width   = raw[0];
+    dev_info->panel_height  = raw[1];
+    dev_info->img_buff_addr = (raw[3] << 16) | raw[2];
+    // Unfortunately the strings need to be swapped back to BE format...
+    for(uint32_t i=0; i<sizeof(dev_info->firmware_version); i+=2) {
+        uint32_t idx = i/sizeof(*raw) + 4;
+        dev_info->firmware_version[i  ] = (raw[idx] >> 8);
+        dev_info->firmware_version[i+1] = (raw[idx] & 0xFF);
+
+        idx += sizeof(dev_info->firmware_version)/sizeof(*raw);
+        dev_info->lut_version[i  ] = (raw[idx] >> 8);
+        dev_info->lut_version[i+1] = (raw[idx] & 0xFF);
+    }
+}
+
 /// @brief Converts the device info struct into a string.
 /// @param dev_info Pointer to the raw data encoding the device info
 /// @param buff Pointer to the buffer to store the string in. The caller must
@@ -300,9 +316,12 @@ bool it8951_set_power(stIT8951_Handler_t *hdlr, const bool on) {
     return send_command_args(hdlr, IT8951_COMMAND_POWER_SEQUENCE, (uint16_t[]){on}, 1);
 }
 
-bool it8951_get_device_info(stIT8951_Handler_t *hdlr, stIT8951_DeviceInfo_t *dev_info) {
-    return send_command(hdlr, IT8951_COMMAND_GET_DEV_INFO) &&
-           read_data(hdlr, (uint16_t*)dev_info, sizeof(stIT8951_DeviceInfo_t)/2);
+bool it8951_get_device_info(stIT8951_Handler_t *hdlr, stIT8951_DeviceInfo_t *const dev_info) {
+    uint16_t raw_device_info[sizeof(hdlr->device_info)/sizeof(uint16_t)];
+    const bool status = send_command(hdlr, IT8951_COMMAND_GET_DEV_INFO) &&
+                        read_data(hdlr, raw_device_info, ARRAY_LENGTH(raw_device_info));
+    it8951_u16_arr_to_device_info(raw_device_info, dev_info);
+    return status;
 }
 
 bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode){
