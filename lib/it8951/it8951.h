@@ -249,6 +249,7 @@ bool it8951_init(stIT8951_Handler_t *hdlr);
 void it8951_pack_pixels(const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint8_t *const in_pix, uint16_t *const out_words, /*out*/ uint32_t *word_cnt);
 bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint16_t *const ppixels, const uint32_t count);
 bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode);
+bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t mode, uint8_t colour);
 uint32_t rectangle_get_area(const stRectangle_t *const rect);
 
 #endif

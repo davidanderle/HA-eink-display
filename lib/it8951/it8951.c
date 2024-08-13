@@ -349,7 +349,7 @@ bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect,
     // Refresh EPD and change image buffer content with the assigned colour
     const uint16_t arg4 = 0x1100 | mode;
     const uint16_t args[] = {rect->x, rect->y, rect->width, rect->height, arg4, colour};
-    return send_command_args(hdlr, IT8951_COMMAND_DPY_AREA, args, ARRAY_LENGTH(args));
+    return send_command_args(hdlr, IT8951_COMMAND_FILL_RECT, args, ARRAY_LENGTH(args));
 }
 
 /// @brief Fixes the IT8951's temperature sensor reading to the specified value
