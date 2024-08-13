@@ -58,7 +58,8 @@ typedef enum eIT8951_Register {
     IT8951_REGISTER_I80CPCR   = IT8951_REGISTER_BASE_SYSTEM    + 0x004,
 
     IT8951_REGISTER_MCSR      = IT8951_REGISTER_BASE_MEMORY_CONV + 0x00,
-    IT8951_REGISTER_LISAR     = IT8951_REGISTER_BASE_MEMORY_CONV + 0x08,
+    IT8951_REGISTER_LISAR_L   = IT8951_REGISTER_BASE_MEMORY_CONV + 0x08,
+    IT8951_REGISTER_LISAR_H   = IT8951_REGISTER_BASE_MEMORY_CONV + 0x0A,
 } eIT8951_Register_t;
 #define IsEnum_IT8951_Register(e) ((e) == IT8951_REGISTER_LUT0EWHR  || \
                                    (e) == IT8951_REGISTER_LUT0XYR   || \
@@ -74,7 +75,8 @@ typedef enum eIT8951_Register {
                                    (e) == IT8951_REGISTER_BGVR      || \
                                    (e) == IT8951_REGISTER_I80CPCR   || \
                                    (e) == IT8951_REGISTER_MCSR      || \
-                                   (e) == IT8951_REGISTER_LISAR)
+                                   (e) == IT8951_REGISTER_LISAR_L   || \
+                                   (e) == IT8951_REGISTER_LISAR_H)
 
 typedef enum eIT8951_CommsMode {
     /// @brief TEST_CFG[2:0] = 0b000, I80CPCR = 0 (not supported)

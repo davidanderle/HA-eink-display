@@ -394,8 +394,8 @@ bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const uint32_t a
     assert(addr < (1UL << 26));
     const uint16_t addr_h = (uint16_t)(addr >> 16);
     const uint16_t addr_l = (uint16_t)(addr);
-    return write_reg(hdlr, IT8951_REGISTER_LISAR,   addr_l) &&
-           write_reg(hdlr, IT8951_REGISTER_LISAR+2, addr_h);
+    return write_reg(hdlr, IT8951_REGISTER_LISAR_L, addr_l) &&
+           write_reg(hdlr, IT8951_REGISTER_LISAR_H, addr_h);
 }
 
 /// @brief Writes the specified pixels to the IT8951's internal frame buffer but
