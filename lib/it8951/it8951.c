@@ -550,7 +550,7 @@ bool it8951_init(stIT8951_Handler_t *hdlr) {
     printf("Initialising IT8951...\n");
 
     if(!it8951_get_device_info(hdlr, &hdlr->device_info) || 
-       hdlr->device_info.panel_height == 0 || hdlr->device_info.panel_width)
+       hdlr->device_info.panel_height == 0 || hdlr->device_info.panel_width == 0)
     {
         goto Terminate;
     }
