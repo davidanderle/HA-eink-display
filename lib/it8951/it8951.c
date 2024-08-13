@@ -490,13 +490,13 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
 /// the rectangle are ignored
 /// @param out_words [out] Must be at least (x+start_pad+end_pad)/4*y long and
 /// can be left uninitialized by the caller
-void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle_t *const rect, const uint8_t *const in_pix, uint16_t *const out_words) {
+void it8951_pack_pixels(const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint8_t *const in_pix, uint16_t *const out_words, /*out*/ uint32_t *word_cnt) {
     // TODO: Generalise it to other bpps
     // The following alignment rules must be met:
     // 2bpp -> start_x % 8 = 0, end_x % 8 = 0
     // 4bpp -> start_x % 4 = 0, end_x % 4 = 0
     // 8bpp -> start_x % 2 = 0, end_x % 2 = 0
-    assert(img_info && rect && in_pix && out_words);
+    assert(img_info && rect && in_pix && out_words && word_cnt);
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
 
@@ -508,16 +508,16 @@ void it8951_pack_pixels(stIT8951_ImageInfo_t *img_info, const stRectangle_t *con
         const uint32_t end_pad   = (end_mod == 0) ? 0 : (pix_per_byte - end_mod);
         // (x+start_pad+end_pad)/4*y is the number of uint16_t words the rectangle is 
         // encoded on, taking the alignment rules into account
-        const uint32_t word_cnt = ((rect->width+start_pad+end_pad)*rect->height)/pix_per_byte;
-        const uint32_t word_per_row = word_cnt/rect->height;
+        *word_cnt = ((rect->width+start_pad+end_pad)*rect->height)/pix_per_byte;
+        const uint32_t word_per_row = *word_cnt/rect->height;
 
         // Ensure that the padding is zeroed out
-        memset(out_words, 0, word_cnt*sizeof(*out_words));
+        memset(out_words, 0, *word_cnt*sizeof(*out_words));
 
         // Note: in_pix will naturally be only accessed in the valid range due 
         // to the padding
         uint32_t idx = 0;
-        for(uint32_t w=0; w<word_cnt; w++) {
+        for(uint32_t w=0; w<*word_cnt; w++) {
             // If this is the first word in the row, pad the beginning
             const uint32_t mod = w % word_per_row;
             uint32_t low_bound, high_bound;
