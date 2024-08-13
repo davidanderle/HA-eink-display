@@ -52,6 +52,16 @@ void display_init(void) {
         .duty_cycle_pos = 0,
     }, &spi));
 
+    gpio_config(&(gpio_config_t){
+        .pin_bit_mask = (1ULL << hrdy),
+        .mode = GPIO_MODE_INPUT,
+    });
+    gpio_config(&(gpio_config_t){
+        .pin_bit_mask = (1ULL << ncs),
+        .mode = GPIO_MODE_DEF_OUTPUT,
+    });
+    gpio_set_level(ncs, true);
+
     it8951_hdlr = (stIT8951_Handler_t) {
         .spi_transcieve = it8951_transcieve,
         .set_ncs        = it8951_set_ncs,
