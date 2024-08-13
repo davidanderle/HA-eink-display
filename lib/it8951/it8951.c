@@ -70,7 +70,7 @@ char *it8951_device_info_to_string(const stIT8951_DeviceInfo_t *const dev_info, 
 /// @param rect Pointer to the rectangle
 /// @return Area of the rectangle
 __attribute__((pure))
-uint32_t rectangle_get_area(const stRectangle_t *const rect){
+uint32_t rectangle_get_area(const stRectangle_t *const rect) {
     return rect->width * rect->height;
 }
 
@@ -121,7 +121,7 @@ static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamb
     wait_ready(hdlr);
     hdlr->set_ncs(0);
     // Loop from -1 to send the preamble, without requiring new arr allocation
-    for(int32_t i=-1; i<count && status; i++) {
+    for(int32_t i=-1; (i<count) && status; i++) {
         const uint16_t txdata = (i >= 0) ? data[i] : preamble;
         status = hdlr->spi_transcieve((uint16_t[]){__builtin_bswap16(txdata)}, NULL, sizeof(uint16_t));
         wait_ready(hdlr);
@@ -206,8 +206,8 @@ STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int3
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
-    for(int32_t i=-2; i<count && status; i++) {
-        const uint16_t txdata = (i != -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
+    for(int32_t i=-2; (i<count) && status; i++) {
+        const uint16_t txdata = (i > -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
         uint16_t rxdata;
         status = hdlr->spi_transcieve(&txdata, &rxdata, sizeof(uint16_t));
         // The first 2xuint16_t words are discarded (preamble reply and dummy word)
@@ -324,7 +324,7 @@ bool it8951_get_device_info(stIT8951_Handler_t *hdlr, stIT8951_DeviceInfo_t *con
     return status;
 }
 
-bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode){
+bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode) {
     const uint16_t args[] = {rect->x, rect->y, rect->width, rect->height, display_mode};
     return wait_for_display_ready(hdlr) && 
            send_command_args(hdlr, IT8951_COMMAND_DPY_AREA, args, ARRAY_LENGTH(args));
@@ -336,7 +336,7 @@ bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const re
 /// @param mode Display mode to use for the update
 /// @param colour Colour to fill the rectangle with. Must be <= 8bpp
 /// @return True if the SPI transaction succeeded, false otherwise
-bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t mode, uint8_t colour){
+bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t mode, uint8_t colour) {
     assert(rect);
     assert(IsEnum_IT8951_DisplayMode(mode));
 
@@ -432,7 +432,7 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
 /// @param x X coordinate to load the BMP at
 /// @param y Y coordinate to load the BMP at
 /// @return 
-bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint16_t x, const uint16_t y){
+bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint16_t x, const uint16_t y) {
     FILE *img = fopen(bmp, "rb");
     if(img == NULL){
         printf("Failed to open the BMP file\n");
