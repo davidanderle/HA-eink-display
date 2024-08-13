@@ -2,32 +2,24 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
 #include "ble.h"
 #include "esp_log.h"
 #include "lvgl.h"
 #include "display.h"
 #include "ui.h"
+#include "it8951.h"
 
 // TODO: Using TinyUSB, an USB mass storage device should be implemented to
 // store json files that are displayed on the UI. This setup is rather involved.
 // TODO: Separate the IT8951 in a git submodule and add it as a library
-
-static void display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
-    const uint32_t w = lv_area_get_width(area);
-    const uint32_t h = lv_area_get_height(area);
-
-    // TODO: Shift out the pixels to the it8951
-    
-    // This function must be called when the display has been updated
-    lv_disp_flush_ready(disp);
-}
+// TODO: Try to speed up compilation by removing unnecessary components
 
 static inline uint32_t custom_tick_get(void) {
     // The function returns a int64_t in [us], so we cast to [ms] 
     return (uint32_t)(esp_timer_get_time()/1000);
 }
 
-// TODO: Try to speed up compilation by removing unnecessary components
 void app_main(void) {
     //1872x1404
     // No need to worry about double-buffering as here FPS is not important...
@@ -57,7 +49,7 @@ void app_main(void) {
 
     // Enter a 1ms background loop (this is not required if the setup is complete)
     while(true) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1000));
         lv_timer_handler();
     }
 
