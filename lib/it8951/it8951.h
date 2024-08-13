@@ -207,6 +207,9 @@ typedef struct __attribute__((packed, aligned(2))) stIT8951_DeviceInfo {
     char lut_version[16];
 } stIT8951_DeviceInfo_t;
 static_assert(sizeof(stIT8951_DeviceInfo_t) == 40);
+// This property is utilized by the it8951_u16_arr_to_device_info function
+static_assert(sizeof(((stIT8951_DeviceInfo_t*)0)->firmware_version) == sizeof(((stIT8951_DeviceInfo_t*)0)->lut_version),
+               "firmware_version and lut_version must have the same size");
 
 // TODO: Check if this is uint16_t
 typedef struct __attribute__((packed)) stRectangle {
