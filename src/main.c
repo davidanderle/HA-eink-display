@@ -20,12 +20,14 @@ static inline uint32_t custom_tick_get(void) {
     return (uint32_t)(esp_timer_get_time()/1000);
 }
 
+// TODO: Turn off unused LVGL widgets!
 void app_main(void) {
-    //1872x1404
-    // No need to worry about double-buffering as here FPS is not important...
-    static lv_color_t draw_buff[1024];
+    // 1872x1404 E-Ink VB3300-KCA 4bpp display
+    // Buffer for LVGL drawing and rendering (ping-pong). Each buffer is a full
+    // frame at 8bit resolution. Before sending the image to the contoller, the 
+    // resolution is reduced to 4bpp grayscale
+    EXT_RAM_BSS_ATTR static uint8_t draw_buff[2][DISPLAY_VER_RES*DISPLAY_HOR_RES];
 
-    ESP_LOGI("CHIP_INFO", "PSRAM: %dMB", heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / (1024 * 1024));
     ESP_LOGI("HA-EINK", "Starting HA E-Ink display...");
     
     ble_init();
