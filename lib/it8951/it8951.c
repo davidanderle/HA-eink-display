@@ -257,10 +257,12 @@ static bool wait_for_display_ready(stIT8951_Handler_t *hdlr) {
 
 static bool load_img_area_start(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect) {
     assert(img_info && rect);
-    if(!rectangle_is_contained_within(rect, &hdlr->panel_area)) {
+
+    if(!rectangle_is_contained_within(rect, &hdlr->panel_area)){
+        char buff[2][53];
         printf("Rectangle \n%s\n is not within the panel area %s\n", 
-               rectangle_to_string(rect, (char[53]){0}), 
-               rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
+               rectangle_to_string(rect, buff[0]), 
+               rectangle_to_string(&hdlr->panel_area, buff[1]));
         return false;
     }
     const uint16_t args[] = {*(uint16_t*)img_info, rect->x, rect->y, rect->width, rect->height};
