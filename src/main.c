@@ -39,10 +39,9 @@ void app_main(void) {
     lv_tick_set_cb(custom_tick_get);
 
     // Create the display and attach the displaying function
-    lv_display_t *disp = lv_display_create(1404, 1872);
+    lv_display_t *disp = lv_display_create(DISPLAY_HOR_RES, DISPLAY_VER_RES);
     lv_display_set_flush_cb(disp, display_flush);
-    // No need to worry about double-buffering as here the FPS is not important
-    lv_display_set_buffers(disp, draw_buff, NULL, sizeof(draw_buff), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, draw_buff[0], draw_buff[1], sizeof(draw_buff), LV_DISPLAY_RENDER_MODE_DIRECT);
 
     ui_init();
 
