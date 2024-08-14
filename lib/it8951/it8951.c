@@ -408,20 +408,14 @@ bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const uint32_t a
 /// @param rect Pointer to the rectangle on the screen to write the pixels to
 /// @param ppixels Pointer to the packed pixels to write
 /// @return True if the SPI transaction succeeded, false otherwise
+// TODO: Clarify that count is the number of pixels to write (padded)
 bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint16_t *const ppixels, const uint32_t count) {
     assert(hdlr && img_info && rect && ppixels);
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
 
-    if(!rectangle_is_contained_within(rect, &hdlr->panel_area)){
-        printf("Rectangle \n%s\n is not within the panel area %s\n", 
-               rectangle_to_string(rect, (char[53]){0}), 
-               rectangle_to_string(&hdlr->panel_area, (char[53]){0}));
-        return false;
-    }
-
     return load_img_area_start(hdlr, img_info, rect) && 
-           write_bytes(hdlr, (uint8_t*)ppixels, count) && 
+           write_bytes(hdlr, (uint8_t*)ppixels, count/2) && 
            load_img_end(hdlr);
 }
 
