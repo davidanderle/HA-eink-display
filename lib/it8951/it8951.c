@@ -450,7 +450,7 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
         uint32_t pix_arr_offset, width, height;
         uint16_t bpp;
         // byte [10:13] encodes the bitmap byte array offset in the image
-        // byte [10:13] encodes the bitmap width in pixels
+        // byte [18:21] encodes the bitmap width in pixels
         // byte [22:25] encodes the bitmap height in pixels
         // byte [28:29] encodes the bitmap bpp
         fseek(img, 10, SEEK_SET);
@@ -467,6 +467,10 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
 
         const size_t img_size = (width*height*bpp)/8;
         uint8_t *buff = malloc(img_size);
+        if(!buff){
+            printf("Insufficient memory!");
+            return false;
+        }
         fseek(img, pix_arr_offset, SEEK_SET);
         fread(buff, sizeof(*buff), img_size, img);
         fclose(img);
@@ -478,7 +482,9 @@ bool it8951_load_bmp(stIT8951_Handler_t *hdlr, const char *const bmp, const uint
             .endianness = IT8951_ENDIANNESS_LITTLE,
         };
         // If the BMP's width/height cannot fit on the screen, this will fail.
-        return it8951_write_packed_pixels(hdlr, &img_info, &rect, (uint16_t*)buff, img_size/2);
+        const bool status = it8951_write_packed_pixels(hdlr, &img_info, &rect, (uint16_t*)buff, img_size/2);
+        free(buff);
+        return status;
     }
 }
 
