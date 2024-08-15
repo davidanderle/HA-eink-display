@@ -368,8 +368,6 @@ bool it8951_force_set_temperature(stIT8951_Handler_t *hdlr, const uint16_t temp)
 /// @return True if the SPI transaction succeeded, false otherwise
 bool it8951_get_temperature(stIT8951_Handler_t *hdlr, uint16_t *temp) {
     return send_command_args(hdlr, IT8951_COMMAND_CMD_TEMPERATURE, (uint16_t[]){0}, 1) &&
-           // TODO: The datasheet is ambiguous about the order of the real and 
-           // forced temperatures
            read_data(hdlr, temp, 2);
 }
 
