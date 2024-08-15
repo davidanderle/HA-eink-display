@@ -14,6 +14,11 @@
 // store json files that are displayed on the UI. This setup is rather involved.
 // TODO: Separate the IT8951 in a git submodule and add it as a library
 // TODO: Try to speed up compilation by removing unnecessary components
+// TODO: ESP32-S3/esptool has a bug that sometimes prevents the unit from
+// rebooting from the bootloader using the RTS/DTS pins (see here: 
+// https://github.com/espressif/arduino-esp32/issues/6762#issuecomment-1182821492)
+// Try to set ESP_CONSOLE_USB_SERIAL_JTAG in the menuconfig (prevents USB mass 
+// storage from working) and set init state of RTS/DTS to 0 at upload
 
 static inline uint32_t custom_tick_get(void) {
     // The function returns a int64_t in [us], so we cast to [ms] 
