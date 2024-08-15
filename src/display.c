@@ -2,6 +2,7 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
+#include "hal/spi_ll.h"
 #include "lvgl.h"
 #include "display.h"
 
@@ -14,17 +15,44 @@ static const gpio_num_t spi_mosi = 35;
 static const gpio_num_t spi_miso = 37;
 static const gpio_num_t spi_clk = 36;
 
+#define min(a,b)             \
+({                           \
+    __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+    _a < _b ? _a : _b;       \
+})
+
+// Max DMA transfer byte length on the ESP32-S3 is (1<<18)/8=32768. In a single 
+// transaction, the maximum amount of bytes we may want to tx is a full image at
+// 4bpp: 1872*1404/2. Therefore an SPI queue size of 
+// ceil((1872*1404/2)/32768)=41 can utilize the SPI+DMA fully.
+#define SPI_MAX_TRANSFER_SIZE (SPI_LL_DMA_MAX_BIT_LEN/8)
+// TODO: This needs a generic ROUND_UP macro
+#define SPI_QUEUE_SIZE (((DISPLAY_HOR_RES*DISPLAY_VER_RES)/(SPI_MAX_TRANSFER_SIZE*2ull))+1)
+static_assert(SPI_MAX_TRANSFER_SIZE <= SPI_MAX_TRANSFER_SIZE, "Adjust SPI transfer size");
+
 static inline bool it8951_transcieve(const void *txdata, void *rxdata, size_t len) {
     // TODO: Could keep the CS active between transmissions! Would allow lower 
     // power consumption .flags = SPI_TRANS_CS_KEEP_ACTIVE
     // TODO: Is there a speed/power gain by using the .tx_data, .rx_data and 
     // .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA for len <= 4?
     // TODO: Implement queues to speed things up!
-    return spi_device_polling_transmit(spi, &(spi_transaction_t) {
-        .length = len*8,
-        .tx_buffer = txdata,
-        .rx_buffer = rxdata,
+
+    int32_t bit_size = len*8;
+    uint32_t ptr_off = 0;
+    bool status = true;
+    while(bit_size > 0 && status) {
+        const int32_t bit_to_tx = min(SPI_LL_DMA_MAX_BIT_LEN, bit_size);
+        //ESP_LOGI("SPI", "curr bit len=%ld", bit_to_tx);
+        status = spi_device_polling_transmit(spi, &(spi_transaction_t) {
+            .length = bit_to_tx,
+            .tx_buffer = txdata ? txdata + ptr_off : NULL,
+            .rx_buffer = rxdata ? rxdata + ptr_off : NULL,
     }) == ESP_OK;
+        bit_size -= bit_to_tx;
+        ptr_off = bit_to_tx/8;
+    }
+    return status;
 }
 
 static inline void it8951_set_ncs(bool state) {
@@ -67,13 +95,14 @@ void display_init(void) {
         .sclk_io_num = spi_clk,
         .quadwp_io_num = -1, // Unused
         .quadhd_io_num = -1, // Unused
+        .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,
     }, SPI_DMA_CH_AUTO));
 
     ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &(spi_device_interface_config_t){
         .clock_speed_hz = 24000000,
         .mode = 0,
         .spics_io_num = -1, // Controlled externally
-        .queue_size = 2,
+        .queue_size = SPI_QUEUE_SIZE,
         .pre_cb = NULL,
         .post_cb = NULL,
         .flags = 0,
