@@ -128,6 +128,14 @@ void display_init(void) {
 
     // Clear the display to white
     it8951_fill_rect(&it8951_hdlr, &it8951_hdlr.panel_area, IT8951_DISPLAY_MODE_INIT, 0xF);
+
+    stIT8951_ImageInfo_t img_info = {IT8951_ENDIANNESS_LITTLE, IT8951_COLOR_DEPTH_BPP_4BIT, IT8951_ROTATION_MODE_0};
+    stRectangle_t rect = {0, 0, 32, 32};
+    const uint32_t num_pix = rectangle_get_area(&rect);
+    uint16_t px_map[256];
+    memset(px_map, 0x77, sizeof(px_map));
+    it8951_write_packed_pixels(&it8951_hdlr, &img_info, &rect, px_map, num_pix);
+    it8951_display_area(&it8951_hdlr, &rect, IT8951_DISPLAY_MODE_GC16);
     
     // Create a rainbow
     // TODO: This has some weird pixels scattered over the rainbow. Perhaps SPI
