@@ -158,21 +158,19 @@ STATIC INLINE bool write_data(stIT8951_Handler_t *hdlr, const uint16_t *const da
 STATIC INLINE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const data, const int32_t count) {
     assert(hdlr && data);
 
-    const size_t txsize = count*sizeof(uint8_t)+sizeof(uint16_t); 
-    uint8_t *txdata = malloc(txsize);
-    if(!txdata) {
-        return false;
-    }
     const uint16_t preamble = __builtin_bswap16(IT8951_SPI_PREAMBLE_WRITE_DATA);
-    memcpy(&txdata[0], &preamble, sizeof(uint16_t));
-    memcpy(&txdata[2], data, count*sizeof(uint8_t));
 
     wait_ready(hdlr);
     hdlr->set_ncs(0);
-    // Transmit the preamble, and if successful, transmit the data as bytes
-    const bool status = hdlr->spi_transcieve(&txdata, NULL, txsize);
+    bool status = hdlr->spi_transcieve(&preamble, NULL, sizeof(preamble));
+    if(!status)
+        goto Terminate;
+
+    wait_ready(hdlr);
+    status = hdlr->spi_transcieve(data, NULL, count);
+
+Terminate:
     hdlr->set_ncs(1);
-    free(txdata);
     return status;
 }
 
