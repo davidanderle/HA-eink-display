@@ -63,7 +63,14 @@ static inline bool it8951_get_hrdy(void) {
     return gpio_get_level(hrdy);
 }
 
-void display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+__attribute__((pure, optimize("Ofast"))) 
+static inline uint8_t IRAM_ATTR rgb565_to_gray4(const uint16_t color) {
+    static const uint8_t DRAM_ATTR lut[65536] = { 
+        #include "rgb565_to_gray4.txt" 
+    };
+    return lut[color];
+}
+// TODO: May need to remove the strict timing dependency of the dirty pixel
     static const stIT8951_ImageInfo_t img_info = {
         .rotation = IT8951_ROTATION_MODE_0,
         .bpp = IT8951_COLOR_DEPTH_BPP_4BIT,
