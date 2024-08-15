@@ -251,5 +251,6 @@ bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageIn
 bool it8951_display_area(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t display_mode);
 bool it8951_fill_rect(stIT8951_Handler_t *hdlr, const stRectangle_t *const rect, eIT8951_DisplayMode_t mode, uint8_t colour);
 uint32_t rectangle_get_area(const stRectangle_t *const rect);
+char *rectangle_to_string(const stRectangle_t *const rect, char *buff);
 
 #endif
