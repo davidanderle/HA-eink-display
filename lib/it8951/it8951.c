@@ -405,7 +405,7 @@ bool it8951_set_img_buff_base_address(stIT8951_Handler_t *hdlr, const uint32_t a
 /// @param ppixels Pointer to the packed pixels to write
 /// @return True if the SPI transaction succeeded, false otherwise
 // TODO: Clarify that count is the number of pixels to write (padded)
-bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const uint16_t *const ppixels, const uint32_t count) {
+bool it8951_write_packed_pixels(stIT8951_Handler_t *hdlr, const stIT8951_ImageInfo_t *const img_info, const stRectangle_t *const rect, const void *const ppixels, const uint32_t count) {
     assert(hdlr && img_info && rect && ppixels);
     // TODO: Other bpps are not yet supported
     assert(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT);
