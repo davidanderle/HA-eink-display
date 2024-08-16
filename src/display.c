@@ -43,14 +43,13 @@ static inline bool it8951_transcieve(const void *txdata, void *rxdata, size_t le
     bool status = true;
     while(bit_size > 0 && status) {
         const int32_t bit_to_tx = min(SPI_LL_DMA_MAX_BIT_LEN, bit_size);
-        //ESP_LOGI("SPI", "curr bit len=%ld", bit_to_tx);
         status = spi_device_polling_transmit(spi, &(spi_transaction_t) {
             .length = bit_to_tx,
-            .tx_buffer = txdata ? txdata + ptr_off : NULL,
-            .rx_buffer = rxdata ? rxdata + ptr_off : NULL,
+            .tx_buffer = txdata ? (txdata + ptr_off) : NULL,
+            .rx_buffer = rxdata ? (rxdata + ptr_off) : NULL,
         }) == ESP_OK;
         bit_size -= bit_to_tx;
-        ptr_off = bit_to_tx/8;
+        ptr_off += bit_to_tx/8;
     }
     return status;
 }
