@@ -105,14 +105,14 @@ void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t 
     //char buff[64];
     //ESP_LOGI("Flush", "Rect=\n%s", rectangle_to_string(&disp_rect, buff));
     //ESP_LOGI("Flush", "Pad rect=\n%s", rectangle_to_string(&pad_rect, buff));
-    ESP_LOGI("Flush", "%x,%x,%x,%x", px_map[0],px_map[1],px_map[2],px_map[3]);
 
-    // Get the number of pixels we are transmitting
-    // Convert the RGB565 pixel to GRAY4 and pack them back to the OG array
-    // We map 2 bytes into 4bits
-    uint16_t *color = (uint16_t*)px_map;
+    // Get the number of pixels need to display
     const uint32_t num_pix = lv_area_get_size(area);
-    //ESP_LOGI("Flush", "color_start=%p, color_end=%p", color, &color[num_pix]);
+    // Convert the RGB565 pixel to GRAY4 and pack them back to the OG array.
+    // *px_map is contained within the draw_buff we defined in main.c. When the 
+    // flush_cb is called, LVGL is done with the processing of this buffer,
+    // therefore we're free to further modify it. Here we map 2 bytes into 4bits
+    uint16_t *color = (uint16_t*)px_map;
     for(uint32_t i=0; i<num_pix; i++) {
         // This loop should naturally stay within bounds
         const uint8_t g4 = rgb565_to_gray4(*color++);
@@ -120,17 +120,12 @@ void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t 
         const uint32_t idx = i >> 1;
         px_map[idx] = odd ? (px_map[idx] | (g4 << 4)) : g4;
     }
-    ESP_LOGI("Flush", "%x,%x,%x,%x", px_map[0],px_map[1],px_map[2],px_map[3]);
 
     // Offset back the pix pointer by the padding (data is don't care)
     uint8_t *ptr = px_map - (disp_rect.x-pad_rect.x)/2;
     const uint32_t num_pix_tx = rectangle_get_area(&pad_rect);
     it8951_write_packed_pixels(&it8951_hdlr, &img_info, &pad_rect, ptr, num_pix_tx);
     it8951_display_area(&it8951_hdlr, &disp_rect, IT8951_DISPLAY_MODE_GC16);
-
-    // *px_map is contained within the draw_buff we defined in main.c. When the 
-    // flush_cb is called, LVGL is done with the processing of this buffer,
-    // therefore we're free to modify it.
 
     // lv_display_flush_is_last(display) to check if the last block of rendering
 
