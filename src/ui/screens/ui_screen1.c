@@ -4,6 +4,7 @@
 // Project name: ha_display
 
 #include "../ui.h"
+#include "esp_log.h"
 
 void ui_screen1_screen_init(void)
 {
@@ -12,11 +13,11 @@ void ui_screen1_screen_init(void)
     lv_obj_set_style_bg_image_src(ui_screen1, &ui_img_hand_png, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_label1 = lv_label_create(ui_screen1);
-    lv_obj_set_width(ui_label1, lv_pct(100));
-    lv_obj_set_height(ui_label1, lv_pct(100));
+    //lv_obj_set_width(ui_label1, lv_pct(100));
+    //lv_obj_set_height(ui_label1, lv_pct(100));
     lv_obj_set_align(ui_label1, LV_ALIGN_CENTER);
     lv_label_set_long_mode(ui_label1, LV_LABEL_LONG_DOT);
-    lv_label_set_text(ui_label1, "Hello, Pumpkin and Frogface!");
-    lv_obj_set_style_text_font(ui_label1, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_label_set_text(ui_label1, "\xF0\x9F\xA4\x96 \xE2\x99\xA5 \xF0\x9F\x8E\x83 \xF0\x9F\xA5\xB0");
+    lv_obj_set_style_text_font(ui_label1, &ext_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
 
 }
