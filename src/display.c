@@ -118,7 +118,7 @@ void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t 
         const uint8_t g4 = rgb565_to_gray4(*color++);
         const bool odd = i & 0b1;
         const uint32_t idx = i >> 1;
-        px_map[idx] = odd ? (px_map[idx] | (g4 << 4)) : g4;
+        px_map[idx] = odd ? (px_map[idx] | g4) : (g4 << 4);
     }
 
     // Offset back the pix pointer by the padding (data is don't care)
@@ -174,7 +174,7 @@ void display_init(void) {
 
     // Clear the display to white
     it8951_fill_rect(&it8951_hdlr, &it8951_hdlr.panel_area, IT8951_DISPLAY_MODE_INIT, 0xF);
-    
+
     //stIT8951_ImageInfo_t img_info = {IT8951_ENDIANNESS_LITTLE, IT8951_COLOR_DEPTH_BPP_4BIT, IT8951_ROTATION_MODE_0};
     // Create a rainbow
     //stRectangle_t rect = {0, 0, it8951_hdlr.panel_area.width/16, it8951_hdlr.panel_area.height};
