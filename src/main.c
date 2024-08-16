@@ -20,12 +20,8 @@
 // Try to set ESP_CONSOLE_USB_SERIAL_JTAG in the menuconfig (prevents USB mass 
 // storage from working) and set init state of RTS/DTS to 0 at upload
 
-static inline uint32_t custom_tick_get(void) {
-    // The function returns a int64_t in [us], so we cast to [ms] 
-    return (uint32_t)(esp_timer_get_time()/1000);
-}
-
-// TODO: Turn off unused LVGL widgets!
+// TODO: Could merge the ext_montserrat_14 and the lv_montserrat_14 (to get the
+// extra icon glyps) to save some flash
 void app_main(void) {
     // 1872x1404 E-Ink VB3300-KCA 4bpp display
     // Buffer for LVGL drawing and rendering (ping-pong). Each buffer is a 1/2
@@ -41,7 +37,7 @@ void app_main(void) {
 
     lv_init();
 
-    lv_tick_set_cb(custom_tick_get);
+    lv_tick_set_cb(xTaskGetTickCount);
 
     // Create the display and attach the displaying function
     lv_display_t *disp = lv_display_create(DISPLAY_HOR_RES, DISPLAY_VER_RES);
