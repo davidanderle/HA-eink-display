@@ -20,6 +20,15 @@ I am using a Visual Studio Code setup with PowerShell.
     - Press the `RST` button
     - Release the `BOOT` button
 
+## To upload the last binary without building
+pio run -t nobuild -t upload
+
+# Special character support
+1. Convert ttf/wooff fonts [here](https://lvgl.io/tools/fontconverter) to LVGL format (see [ext_montserrat_14.c](https://github.com/davidanderle/eink_calendar/blob/espidf/src/ext_montserrat_14.c) as example)
+2. Display uses [Montserrat](https://fonts.google.com/specimen/Montserrat) extended with [Noto emoji](https://fonts.google.com/noto/specimen/Noto+Emoji) as its default font. 
+3. Supported emojies: 0x203C-0x3299 and 🤖🎃😀😁😂🤣😍🥰😘🥺🥚🐸👀🍆🥹😊🙂
+4. The emoji set can easily be extended but it quickly eats up the flash
+
 # Test setup
 
 # BOM
