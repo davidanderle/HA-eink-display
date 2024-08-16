@@ -80,34 +80,15 @@ void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t 
         .bpp = IT8951_COLOR_DEPTH_BPP_4BIT,
         .endianness = IT8951_ENDIANNESS_BIG,
     };
-    const stRectangle_t disp_rect = {
+    const stRectangle_t rect = {
         .x      = area->x1,
         .y      = area->y1,
         .width  = lv_area_get_width(area),
         .height = lv_area_get_height(area)
     };
-    
-    // The IT8951 expects the x coordinates of the rectangle to be padded to the 
-    // nearest (16/bpp) pixel (padding to 4 pixels in our case)
-    // So a 2x1 rectangle at (3,0) coordinate will be sent as a 8x1 rectangle,
-    // like d0,d1,d2,p0,p1,d3,d4,d5, where 'dN' are dummy pixels and 'pN' are 
-    // the actual pixels. At 4bpp (4pixels per 16bit word) this will give
-    // 2 transmit words: 0xYXXX, 0xXXXZ, where Y=p0 and Z=p1, X=don't care
-    const uint32_t x1 = area->x1 & ~0b11;
-    const uint32_t x2 = (area->x2+3) & ~0b11;
-    const stRectangle_t pad_rect = {
-        .x      = x1,
-        .y      = disp_rect.y,
-        .width  = (x2-x1),
-        .height = disp_rect.height
-    };
-    
-    //char buff[64];
-    //ESP_LOGI("Flush", "Rect=\n%s", rectangle_to_string(&disp_rect, buff));
-    //ESP_LOGI("Flush", "Pad rect=\n%s", rectangle_to_string(&pad_rect, buff));
 
-    // Get the number of pixels need to display
-    const uint32_t num_pix = lv_area_get_size(area);
+    // Get the number of pixels needed to display
+    const uint32_t num_pix = rectangle_get_area(&rect);
     // Convert the RGB565 pixel to GRAY4 and pack them back to the OG array.
     // *px_map is contained within the draw_buff we defined in main.c. When the 
     // flush_cb is called, LVGL is done with the processing of this buffer,
@@ -121,16 +102,31 @@ void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t 
         px_map[idx] = odd ? (px_map[idx] | g4) : (g4 << 4);
     }
 
-    // Offset back the pix pointer by the padding (data is don't care)
-    uint8_t *ptr = px_map - (disp_rect.x-pad_rect.x)/2;
-    const uint32_t num_pix_tx = rectangle_get_area(&pad_rect);
-    it8951_write_packed_pixels(&it8951_hdlr, &img_info, &pad_rect, ptr, num_pix_tx);
-    it8951_display_area(&it8951_hdlr, &disp_rect, IT8951_DISPLAY_MODE_GC16);
+    it8951_write_packed_pixels(&it8951_hdlr, &img_info, &rect, px_map, num_pix);
+    it8951_display_area(&it8951_hdlr, &rect, IT8951_DISPLAY_MODE_GC16);
 
     // lv_display_flush_is_last(display) to check if the last block of rendering
 
     // This function must be called when the display has been updated
     lv_disp_flush_ready(disp);
+}
+
+__attribute__((optimize("Ofast"))) 
+void IRAM_ATTR display_rounder(lv_event_t *e) {
+    // The IT8951 expects the x coordinates of the rectangle to be padded to the 
+    // nearest (16/bpp) pixel (padding to 4 pixels in our case)
+    // So a 2x1 rectangle at (3,0) coordinate should be sent as a 8x1 rectangle,
+    // like d0,d1,d2,p0,p1,d3,d4,d5, where 'dN' are dummy pixels and 'pN' are 
+    // the actual pixels. At 4bpp (4pixels per 16bit word) this will give
+    // 2 transmit words: 0xYXXX, 0xXXXZ, where Y=p0 and Z=p1, X=don't care. 
+    // This event is fired when an area on the display is invalidated. To ensure
+    // the above alignment requirements are met with no post-processing, we can
+    // expand the invalidated area so that x and x+w always land on a 4pixel 
+    // boundary.
+    lv_area_t * area = lv_event_get_param(e);
+    area->x1 =   area->x1    & ~0b11;
+    // x2 is an inclusive pixel bound!
+    area->x2 = ((area->x2+4) & ~0b11)-1;
 }
 
 // TODO: Use observers to bind data to UI elements
