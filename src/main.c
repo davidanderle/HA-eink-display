@@ -28,9 +28,9 @@ static inline uint32_t custom_tick_get(void) {
 // TODO: Turn off unused LVGL widgets!
 void app_main(void) {
     // 1872x1404 E-Ink VB3300-KCA 4bpp display
-    // Buffer for LVGL drawing and rendering (ping-pong). Each buffer is a full
-    // frame at 8bit resolution. Before sending the image to the contoller, the 
-    // resolution is reduced to 4bpp grayscale
+    // Buffer for LVGL drawing and rendering (ping-pong). Each buffer is a 1/2
+    // frame at 16bit resolution. Before sending the image to the contoller, the 
+    // resolution is reduced to 4bpp grayscale. ~5.01MB buffer in SPIRAM
     EXT_RAM_BSS_ATTR static uint8_t draw_buff[2][DISPLAY_VER_RES*DISPLAY_HOR_RES];
 
     ESP_LOGI("HA-EINK", "Starting HA E-Ink display...");
@@ -46,7 +46,7 @@ void app_main(void) {
     // Create the display and attach the displaying function
     lv_display_t *disp = lv_display_create(DISPLAY_HOR_RES, DISPLAY_VER_RES);
     lv_display_set_flush_cb(disp, display_flush);
-    lv_display_set_buffers(disp, draw_buff[0], draw_buff[1], sizeof(draw_buff), LV_DISPLAY_RENDER_MODE_DIRECT);
+    lv_display_set_buffers(disp, draw_buff[0], draw_buff[1], sizeof(draw_buff), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
     ui_init();
 
