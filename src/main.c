@@ -45,6 +45,7 @@ void app_main(void) {
 
     // Create the display and attach the displaying function
     lv_display_t *disp = lv_display_create(DISPLAY_HOR_RES, DISPLAY_VER_RES);
+    lv_display_set_antialiasing(disp, true);
     lv_display_set_flush_cb(disp, display_flush);
     lv_display_set_buffers(disp, draw_buff[0], draw_buff[1], sizeof(draw_buff), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
