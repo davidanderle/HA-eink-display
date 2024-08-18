@@ -129,7 +129,6 @@ void IRAM_ATTR display_rounder(lv_event_t *e) {
     area->x2 = ((area->x2+4) & ~0b11)-1;
 }
 
-// TODO: Use observers to bind data to UI elements
 void display_init(void) {
     ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &(spi_bus_config_t){
         .miso_io_num = spi_miso,
@@ -170,12 +169,4 @@ void display_init(void) {
 
     // Clear the display to white
     it8951_fill_rect(&it8951_hdlr, &it8951_hdlr.panel_area, IT8951_DISPLAY_MODE_INIT, 0xF);
-
-    //stIT8951_ImageInfo_t img_info = {IT8951_ENDIANNESS_LITTLE, IT8951_COLOR_DEPTH_BPP_4BIT, IT8951_ROTATION_MODE_0};
-    // Create a rainbow
-    //stRectangle_t rect = {0, 0, it8951_hdlr.panel_area.width/16, it8951_hdlr.panel_area.height};
-    //for(uint16_t i=0; i<16; i++){
-    //    rect.x = i*rect.width;
-    //    it8951_fill_rect(&it8951_hdlr, &rect, IT8951_DISPLAY_MODE_GC16, i);
-    //}
 }
