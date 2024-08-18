@@ -1,3 +1,10 @@
+# State of project (18 Aug 2024)
+- LVGL can render any objects on the E-Ink screen through the IT8951
+- HA ESPHome BLE Proxy ready to send data
+- PC to ProS3 BLE data exchange works
+- BLE Rx data written to SPLIFFS as a JSON
+- LVGL can dinamically display the RX'd BLE data
+
 # Introduction
 I started this project on 27 Aug 2023 and is a work in progress. My original attempt was to write the firmware in MicroPython using the LVGL graphics library, but alas after painful trials it turned out that LVGL's MicroPython port is not yet ready to to run on the ESP32-S3 chip. One legacy of this experiment is that now there is a MicroPython driver for the IT8951 chip to drive eink displays on one of the project's branches (TODO link).
 
