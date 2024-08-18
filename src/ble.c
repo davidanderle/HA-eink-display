@@ -53,7 +53,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = &gatt_svr_chr_custom_uuid.u,
                 .access_cb = gatt_svr_chr_access_custom,
                 // TODO: Encrypted writing does not work
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_WRITE_ENC,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
                 .val_handle = &ble_svc_chr_custom_val_handle,
                 .descriptors = (struct ble_gatt_dsc_def[]) {
                     {
