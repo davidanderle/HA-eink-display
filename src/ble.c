@@ -11,9 +11,19 @@
 #include "services/bas/ble_svc_bas.h"
 #include "ble.h"
 
+extern volatile bool is_json_modified;
+extern const char *json_path;
+extern SemaphoreHandle_t file_mutex;
+
+struct ble_data {
+    size_t length;
+    char *data;
+};
+
 /* Static variables */
 static const char *tag = "BLE";
 static uint8_t own_addr_type;
+static QueueHandle_t ble_queue;
 
 /* Staic function declaration */
 // TODO: Maybe rename these to GATT and place them in a new file?
@@ -84,23 +94,70 @@ static int gatt_svr_dsc_access_custom(uint16_t conn_handle, uint16_t attr_handle
 static int gatt_svr_chr_access_custom(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            char buf[1024]; // TODO: Change this to wchar_t
             const uint16_t len = OS_MBUF_PKTLEN(ctxt->om);
-            if(len >= sizeof(buf)){
-                ESP_LOGE(tag, "BLE size not supported");
+            const struct ble_data msg = {
+                .data   = malloc(len+1), // Max 64kB
+                .length = len,
+            };
+            if(!msg.data){
+                ESP_LOGE(tag, "Insufficient memory to load JSON");
+                return BLE_ATT_ERR_INSUFFICIENT_RES;
             }
-            const int rc = os_mbuf_copydata(ctxt->om, 0, len, buf);
-            if(rc == 0){
-                buf[len] = '\0';
-                ESP_LOGI(tag, "Received data: %s", buf);
+
+            int rc = os_mbuf_copydata(ctxt->om, 0, len, msg.data);
+            if(rc == 0) {
+                msg.data[len] = '\0';
+                ESP_LOGI(tag, "Received data: %s", msg.data);
+
+                // Pass in the message in the queue. This is done by copy so the 
+                // dequeuing thread will have a pointer to the malloc'd data.
+                // THE CONSUMER THREAD IS RESPONSIBLE FOR FREEING THIS RESOURCE!
+                if(!xQueueSend(ble_queue, &msg, 0)) {
+                    ESP_LOGE(tag, "Failed to queue message");
+                    free(msg.data);
+                    return BLE_ATT_ERR_INSUFFICIENT_RES;
+                }
+
+                return rc;
             } else {
+                free(msg.data);
                 ESP_LOGE(tag, "Failed to copy data. Requested len: %d", len);
-                return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             }
             return rc;
         default:
-            assert(0);
+            ESP_LOGE(tag, "How did you get here?");
             return BLE_ATT_ERR_UNLIKELY;
+    }
+}
+
+void ble_msg_prcessing_task(void *param) {
+    struct ble_data msg;
+    while(true) {
+        // Wait for a message from the queue
+        if(xQueueReceive(ble_queue, &msg, portMAX_DELAY) && 
+           xSemaphoreTake(file_mutex, portMAX_DELAY)) {
+
+            // Keep the file open as we will do locking/unlocking before each operation
+            FILE *f = fopen(json_path, "w");
+            if(f == NULL) {
+                ESP_LOGE(tag, "Failed to open file %s", json_path);
+                xSemaphoreGive(file_mutex);
+                continue;
+            }
+
+            // Write the received data to SPIFFS in a JSON file
+            if(fwrite(msg.data, 1, msg.length, f) == msg.length) {
+                // Ensure that the write is completed to non-volatile memory
+                fflush(f);
+                ESP_LOGI(tag, "Data successfully written to %s", json_path);
+                is_json_modified = true;
+            } else {
+                ESP_LOGE(tag, "Failed to write all data to the file");
+            }
+            fclose(f);
+            xSemaphoreGive(file_mutex);
+            free(msg.data);
+        }
     }
 }
 
@@ -251,6 +308,9 @@ void ble_host_task(void *param) {
 }
 
 void ble_init(void) {
+    ble_queue = xQueueCreate(8, sizeof(struct ble_data));
+    xTaskCreate(ble_msg_prcessing_task, "ble data handler task", 4096, NULL, 5, NULL);
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
