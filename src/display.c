@@ -54,11 +54,11 @@ static inline bool it8951_transcieve(const void *txdata, void *rxdata, size_t le
     return status;
 }
 
-static inline void it8951_set_ncs(bool state) {
+FORCE_INLINE_ATTR void it8951_set_ncs(bool state) {
     gpio_set_level(ncs, state);
 }
 
-static inline bool it8951_get_hrdy(void) {
+FORCE_INLINE_ATTR bool it8951_get_hrdy(void) {
     return gpio_get_level(hrdy);
 }
 
