@@ -500,14 +500,18 @@ void it8951_pack_pixels(const stIT8951_ImageInfo_t *const img_info, const stRect
 
     const uint32_t pix_per_byte  = it8951_get_pixel_per_byte(img_info->bpp);
 
+    // TODO: Finish this with pading
     if(img_info->bpp == IT8951_COLOR_DEPTH_BPP_4BIT && img_info->endianness == IT8951_ENDIANNESS_LITTLE) {
-        const uint32_t end_mod   = (rect->x + rect->width) % pix_per_byte;
-        const uint32_t start_pad = rect->x % pix_per_byte;
+        const uint32_t mod_mask  = pix_per_byte*2-1; // x%4 = x & 0b11
+        const uint32_t end_mod   = (rect->x + rect->width) & mod_mask;
+
+        const uint32_t start_pad = rect->x & mod_mask;
         const uint32_t end_pad   = (end_mod == 0) ? 0 : (pix_per_byte - end_mod);
-        // (x+start_pad+end_pad)/4*y is the number of uint16_t words the rectangle is 
-        // encoded on, taking the alignment rules into account
-        *word_cnt = ((rect->width+start_pad+end_pad)*rect->height)/pix_per_byte;
-        const uint32_t word_per_row = *word_cnt/rect->height;
+        // [(floor(width/pix_per_word) + (start_pad>0) + (end_pad>0)) * height]
+        // is the number of uint16_t words the rectangle is encoded on, taking
+        // the alignment rules into account
+        const uint32_t word_per_row = rect->width/(pix_per_byte*2)+(start_pad>0)+(end_pad>0);
+        *word_cnt = word_per_row*rect->height;
 
         // Ensure that the padding is zeroed out
         memset(out_words, 0, *word_cnt*sizeof(*out_words));
