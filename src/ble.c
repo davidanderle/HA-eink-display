@@ -81,23 +81,6 @@ static int gatt_svr_dsc_access_custom(uint16_t conn_handle, uint16_t attr_handle
     return BLE_ATT_ERR_UNLIKELY;
 }
 
-//static int gatt_svr_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-//    // Handle read requests
-//    if(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
-//        // Read manufacturer name
-//        if(attr_handle == ble_svc_dis_chr_manu_name_val_handle) {
-//            return os_mbuf_append(ctxt->om, ble_svc_dis_manufacturer_name(),
-//                            strlen(ble_svc_dis_manufacturer_name()));
-//        // Read software revision
-//        } else if(attr_handle == ble_svc_dis_chr_soft_rev_val_handle) {
-//            return os_mbuf_append(ctxt->om, ble_svc_dis_software_revision(),
-//                            strlen(ble_svc_dis_software_revision()));
-//        }
-//    }
-//    // Handle write requests (not applicable for DIS)
-//    return BLE_ATT_ERR_UNLIKELY;
-//}
-
 static int gatt_svr_chr_access_custom(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
