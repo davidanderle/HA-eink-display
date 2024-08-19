@@ -17,6 +17,7 @@ This project contains the necessary BOM and software files to build a Home Assis
 - Daily weather forecast
 - Current weather
 - Last refresh time
+- Location of users (Home/Work/Away or other named locations)
 
 I started this project on 27 Aug 2023 and is a work in progress. My original attempt was to write the firmware in MicroPython using the LVGL graphics library, but alas after painful trials it turned out that LVGL's MicroPython port is not yet ready to to run on the ESP32-S3 chip. One legacy of this experiment is that now there is a MicroPython driver for the IT8951 chip to drive eink displays on one of the project's branches (TODO link).
 
