@@ -234,8 +234,8 @@ typedef struct stIT8951_Handler {
     /// @brief Pointer to the function that sets the nCS GPIO to the required
     /// state.
     void (*set_ncs)(bool state);
-    /// @brief Pointer to the function that reads the HRDY GPIO's state
-    bool (*get_hrdy)(void);
+    /// @brief Pointer to the function that waits for the HRDY GPIO to be high
+    void (*wait_hrdy)(void);
     /// @brief VCOM voltage level in mV. Usually its a negative value. Set to 
     /// INT_MAX if the default VCOM voltage is to be kept. Note that the IT8951
     /// development boards ship with waveforms that are tuned to a specific vcom

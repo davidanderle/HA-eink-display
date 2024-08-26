@@ -99,14 +99,6 @@ char *rectangle_to_string(const stRectangle_t *const rect, char *buff) {
     return buff;
 }
 
-/// @brief The host must wait for the HRDY pin to be high before Tx/Rx of the 
-/// next 2x8 bits.
-/// @param hdlr Pointer to the IT8951 handler
-static inline void wait_ready(stIT8951_Handler_t *hdlr) {
-    assert(hdlr && hdlr->get_hrdy);
-    while(hdlr->get_hrdy() == 0);
-}
-
 static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamble_t preamble, const uint16_t *const data, const int32_t count) {
     assert(hdlr);
     assert(IsEnum_IT8951_SpiPreamble(preamble));
@@ -118,13 +110,13 @@ static bool send_with_preamble(stIT8951_Handler_t *hdlr, const eIT8951_SpiPreamb
     }
     assert(data);
 
-    wait_ready(hdlr);
+    hdlr->wait_hrdy();
     hdlr->set_ncs(0);
     // Loop from -1 to send the preamble, without requiring new arr allocation
     for(int32_t i=-1; (i<count) && status; i++) {
         const uint16_t txdata = (i >= 0) ? data[i] : preamble;
         status = hdlr->spi_transcieve((uint16_t[]){__builtin_bswap16(txdata)}, NULL, sizeof(uint16_t));
-        wait_ready(hdlr);
+        hdlr->wait_hrdy();
     }
     // Ensure that the nCS is set back to the inactive state, whatever happens
     hdlr->set_ncs(1);
@@ -160,13 +152,13 @@ STATIC INLINE bool write_bytes(stIT8951_Handler_t *hdlr, const uint8_t *const da
 
     const uint16_t preamble = __builtin_bswap16(IT8951_SPI_PREAMBLE_WRITE_DATA);
 
-    wait_ready(hdlr);
+    hdlr->wait_hrdy();
     hdlr->set_ncs(0);
     bool status = hdlr->spi_transcieve(&preamble, NULL, sizeof(preamble));
     if(!status)
         goto Terminate;
 
-    wait_ready(hdlr);
+    hdlr->wait_hrdy();
     status = hdlr->spi_transcieve(data, NULL, count);
 
 Terminate:
@@ -202,7 +194,7 @@ STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int3
     }
     assert(data);
 
-    wait_ready(hdlr);
+    hdlr->wait_hrdy();
     hdlr->set_ncs(0);
     for(int32_t i=-2; (i<count) && status; i++) {
         const uint16_t txdata = (i > -2) ? 0 : __builtin_bswap16(IT8951_SPI_PREAMBLE_READ_DATA);
@@ -212,7 +204,7 @@ STATIC bool read_data(stIT8951_Handler_t *hdlr, uint16_t *const data, const int3
         if(i >= 0) {
             data[i] = __builtin_bswap16(rxdata);
         }
-        wait_ready(hdlr);
+        hdlr->wait_hrdy();
     }
     hdlr->set_ncs(1);
     return status;

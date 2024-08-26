@@ -58,11 +58,21 @@ FORCE_INLINE_ATTR void it8951_set_ncs(bool state) {
     gpio_set_level(ncs, state);
 }
 
-FORCE_INLINE_ATTR bool it8951_get_hrdy(void) {
-    return gpio_get_level(hrdy);
+static SemaphoreHandle_t hrdy_semaphore;
+void IRAM_ATTR hrdy_isr(void *arg) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR((SemaphoreHandle_t)arg, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-__attribute__((pure, optimize("Ofast"))) 
+FORCE_INLINE_ATTR void it8951_wait_hrdy(void) {
+    if(gpio_get_level(hrdy) == 0) {
+        // TODO: Using xTaskToNotify may be a quicker option
+        xSemaphoreTake(hrdy_semaphore, portMAX_DELAY);
+    }
+}
+
+__attribute__((always_inline, pure, optimize("Ofast"))) 
 static inline uint8_t IRAM_ATTR rgb565_to_gray4(const uint16_t color) {
     static const uint8_t DRAM_ATTR lut[65536] = { 
         #include "rgb565_to_gray4.txt" 
@@ -152,7 +162,13 @@ void display_init(void) {
     gpio_config(&(gpio_config_t){
         .pin_bit_mask = (1ULL << hrdy),
         .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_POSEDGE,
     });
+    hrdy_semaphore = xSemaphoreCreateBinary();
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(hrdy, hrdy_isr, (void*)hrdy_semaphore);
+
     gpio_config(&(gpio_config_t){
         .pin_bit_mask = (1ULL << ncs),
         .mode = GPIO_MODE_DEF_OUTPUT,
@@ -162,7 +178,7 @@ void display_init(void) {
     it8951_hdlr = (stIT8951_Handler_t) {
         .spi_transcieve = it8951_transcieve,
         .set_ncs        = it8951_set_ncs,
-        .get_hrdy       = it8951_get_hrdy,
+        .wait_hrdy      = it8951_wait_hrdy,
         .vcom_mv        = INT_MAX,
     };
     it8951_init(&it8951_hdlr);
