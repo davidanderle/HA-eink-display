@@ -137,7 +137,6 @@ void ble_msg_prcessing_task(void *param) {
         if(xQueueReceive(ble_queue, &msg, portMAX_DELAY) && 
            xSemaphoreTake(file_mutex, portMAX_DELAY)) {
 
-            // Keep the file open as we will do locking/unlocking before each operation
             FILE *f = fopen(json_path, "w");
             if(f == NULL) {
                 ESP_LOGE(tag, "Failed to open file %s", json_path);
