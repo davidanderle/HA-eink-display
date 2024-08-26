@@ -1,9 +1,11 @@
-# State of project (18 Aug 2024)
+# State of project (26 Aug 2024)
 - LVGL can render any objects on the E-Ink screen through the IT8951
 - HA ESPHome BLE Proxy ready to send data
 - PC to ProS3 BLE data exchange works
 - BLE Rx data written to SPLIFFS as a JSON
 - LVGL can dinamically display the RX'd BLE data
+- UI draft created on iPad
+- HACS component is being prepared [here](https://github.com/davidanderle/HA-eink-display-HACS) (no clue what I'm doing): 
 
 # Introduction
 This project contains the necessary BOM and software files to build a Home Assistant E-Ink Display I've been developed through the past years. This display is a thin, light-weight, battery-driven, [E Ink](https://www.eink.com/) [Home Assistant](https://www.home-assistant.io/) display that acts as a BLE peripheral (GATT server) and displays data from my Home Assitant instance. The displayed data at is
