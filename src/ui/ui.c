@@ -35,7 +35,7 @@ void ui_update(void *param) {
         }
 
         ESP_LOGI(tag, "Attempting to read the file's content");
-        char buff[MAX_BLE_MSG_SIZE];
+        EXT_RAM_BSS_ATTR static char buff[MAX_BLE_MSG_SIZE];
         fseek(f, 0, SEEK_SET);
         const size_t read_bytes = fread(buff, 1, sizeof(buff)-1, f);
         fclose(f);
