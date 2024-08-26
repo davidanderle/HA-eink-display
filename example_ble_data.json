@@ -1,0 +1,127 @@
+{
+  "timestamp": "1724685735",
+  "week_number": 35,
+  "calendars": [
+    {
+      "days": [
+        {
+          "date": "2024-08-25",
+          "name": "Sun",
+          "condition": "sun_cloud",
+          "temperature": 21,
+          "events": [
+            [
+              {"start": "12:30", "end": "16:15", "title": "My1stEvent", "day_span": 0, "is_all_day": 0},
+              {"start": "18:00", "end": "19:00", "title": "My2ndEvent", "day_span": 0, "is_all_day": 0}
+            ],
+            [
+              {"start": "8:30", "end": "9:30", "title": "Interview", "day_span": 0, "is_all_day": 0}
+            ]
+          ]
+        },
+        {
+          "date": "2024-08-26",
+          "name": "Mon",
+          "condition": "rain",
+          "temperature": 18,
+          "events": [
+            [
+              {"start": "12:30", "end": "16:15", "title": "My3rdEvent", "day_span": 0, "is_all_day": 0}
+            ],
+            []
+          ]
+        },
+        {
+          "date": "2024-08-27",
+          "name": "Tue",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [],
+            [
+              {"start": "12:30", "end": "16:15", "title": "My1stEvent", "day_span": 0, "is_all_day": 0},
+              {"start": "18:00", "end": "19:00", "title": "My2ndEvent", "day_span": 2, "is_all_day": 0}
+            ]
+          ]
+        },
+        {
+          "date": "2024-08-28",
+          "name": "Wed",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [],
+            []
+          ]
+        },
+        {
+          "date": "2024-08-29",
+          "name": "Thu",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [],
+            []
+          ]
+        },
+        {
+          "date": "2024-08-30",
+          "name": "Fri",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [],
+            []
+          ]
+        },
+        {
+          "date": "2024-08-31",
+          "name": "Sat",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [],
+            [
+              {"start":"00:00", "end":"23:59", "title":"🎃", "day_span": 0, "is_all_day": 1}
+            ]
+          ]
+        },
+        {
+          "date": "2024-09-01",
+          "name": "Sun",
+          "condition": "cloud",
+          "temperature": "20",
+          "events": [
+            [
+              {"start":"00:00", "end":"23:59", "title":"🐸", "day_span": 0, "is_all_day": 1}
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  ],
+  "consumption": {
+    "water": 206,
+    "heating": 2,
+    "electrity": {
+      "total": 3.4,
+      "import": 0.9,
+      "export": 7.9,
+      "solar": 10.4
+    }
+  },
+  "locations": [
+    {"place": "Away"},
+    {"place": "Home"}
+  ],
+  "commute": [
+    {"time": 11},
+    {"time": 13}
+  ],
+  "tasks": [
+    {"task1": "task1"},
+    {"task2": "task2"},
+    {"task3": "task3"}
+  ]
+}
