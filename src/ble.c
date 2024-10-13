@@ -331,7 +331,15 @@ void ble_init(void) {
 
     // In Turkic mythology, Tengri is the sky god who watches over the world 
     int rc = ble_svc_gap_device_name_set("Tengri");
-    assert(rc == 0);
+    if(rc != 0) {
+        ESP_LOGE(tag, "Error setting device name; rc=%d", rc);
+    }
+
+    // Generic display
+    rc = ble_svc_gap_device_appearance_set(0x0140);
+    if(rc != 0) {
+        ESP_LOGE(tag, "Error setting appearance; rc=%d", rc);
+    }
 
     ble_svc_dis_init();
     rc = ble_svc_dis_model_number_set("HA Display");
