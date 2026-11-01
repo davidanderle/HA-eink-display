@@ -97,7 +97,8 @@ static void icon_draw_cb(lv_event_t * e) {
 lv_obj_t * ui_icon_create(lv_obj_t * parent, ui_icon_t type, int32_t size) {
     lv_obj_t * obj = lv_obj_create(parent);
     lv_obj_remove_style_all(obj);
-    lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_scrollable(obj, false);
+    lv_obj_set_clickable(obj, false);
     lv_obj_set_size(obj, size, size);
     lv_obj_set_user_data(obj, (void *)(uintptr_t)type);
     lv_obj_add_event_cb(obj, icon_draw_cb, LV_EVENT_DRAW_MAIN, NULL);

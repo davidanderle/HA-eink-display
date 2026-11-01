@@ -52,7 +52,6 @@ static void ui_task(void *arg) {
     lv_tick_set_cb(lv_tick_ms);
     // Create the display and attach the displaying function
     lv_display_t *disp = lv_display_create(DISPLAY_UI_W, DISPLAY_UI_H);
-    lv_display_set_antialiasing(disp, true);
     // display_flush() expects L8
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_L8);
     lv_display_set_flush_cb(disp, display_flush);
