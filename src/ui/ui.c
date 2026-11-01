@@ -2,18 +2,12 @@
 #include "ui_helpers.h"
 #include "ble.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 const char *tag = "UI";
 
 void ui_screen_main_init(void);
-
-lv_obj_t * ui_screen_main;
-lv_obj_t * ui_label_message;
-
-///////////////////// TEST LVGL SETTINGS ////////////////////
-#if LV_COLOR_DEPTH != 16
-    #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
-#endif
 
 extern volatile bool is_json_modified;
 extern const char *json_path;
@@ -57,5 +51,5 @@ void ui_update(void *param) {
 
 void ui_init(void) {
     ui_screen_main_init();
-    lv_disp_load_scr(ui_screen_main);
+    lv_screen_load(ui_screen_main);
 }

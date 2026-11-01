@@ -10,6 +10,7 @@
 #include "services/dis/ble_svc_dis.h"
 #include "services/bas/ble_svc_bas.h"
 #include "ble.h"
+#include "battery.h"
 
 extern volatile bool is_json_modified;
 extern const char *json_path;
@@ -63,7 +64,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = &gatt_svr_chr_custom_uuid.u,
                 .access_cb = gatt_svr_chr_access_custom,
                 // TODO: Encrypted writing does not work
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
+                .flags = BLE_GATT_CHR_F_WRITE,
                 .val_handle = &ble_svc_chr_custom_val_handle,
                 .descriptors = (struct ble_gatt_dsc_def[]) {
                     {
@@ -141,6 +142,7 @@ void ble_msg_prcessing_task(void *param) {
             if(f == NULL) {
                 ESP_LOGE(tag, "Failed to open file %s", json_path);
                 xSemaphoreGive(file_mutex);
+                free(msg.data);
                 continue;
             }
 
@@ -306,6 +308,13 @@ void ble_host_task(void *param) {
     nimble_port_freertos_deinit();
 }
 
+void ble_set_battery_level(uint8_t percent) {
+    const int rc = ble_svc_bas_battery_level_set(percent);
+    if(rc != 0) {
+        ESP_LOGE(tag, "Error setting battery level; rc=%d", rc);
+    }
+}
+
 void ble_init(void) {
     ble_queue = xQueueCreate(8, sizeof(struct ble_data));
     xTaskCreate(ble_msg_prcessing_task, "ble data handler task", 4096, NULL, 5, NULL);
@@ -359,11 +368,7 @@ void ble_init(void) {
     }
 
     ble_svc_bas_init();
-    // TODO: This should be adjusted periodically by the code
-    rc = ble_svc_bas_battery_level_set(100);
-    if(rc != 0) {
-        ESP_LOGE(tag, "Error setting battery level; rc=%d", rc);
-    }
+    ble_set_battery_level(battery_get_percent());
 
     rc = ble_gatts_count_cfg(gatt_svr_svcs);
     assert(rc == 0);

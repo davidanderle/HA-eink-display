@@ -1,7 +1,7 @@
 SET(SOURCES screens/ui_screen1.c
     ui.c
     components/ui_comp_hook.c
-    ui_helpers.c
-    images/ui_img_hand_png.c)
+    components/ui_icons.c
+    ui_helpers.c)
 
 add_library(ui ${SOURCES})

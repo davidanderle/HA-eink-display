@@ -1,5 +1,7 @@
 #include "it8951.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "hal/spi_ll.h"
@@ -22,6 +24,13 @@ static const gpio_num_t spi_clk = 36;
     _a < _b ? _a : _b;       \
 })
 
+#define max(a,b)             \
+({                           \
+    __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+    _a > _b ? _a : _b;       \
+})
+
 // Max DMA transfer byte length on the ESP32-S3 is (1<<18)/8=32768. In a single 
 // transaction, the maximum amount of bytes we may want to tx is a full image at
 // 4bpp: 1872*1404/2. Therefore an SPI queue size of 
@@ -29,7 +38,8 @@ static const gpio_num_t spi_clk = 36;
 #define SPI_MAX_TRANSFER_SIZE (SPI_LL_DMA_MAX_BIT_LEN/8)
 // TODO: This needs a generic ROUND_UP macro
 #define SPI_QUEUE_SIZE (((DISPLAY_HOR_RES*DISPLAY_VER_RES)/(SPI_MAX_TRANSFER_SIZE*2ull))+1)
-static_assert(SPI_MAX_TRANSFER_SIZE <= SPI_MAX_TRANSFER_SIZE, "Adjust SPI transfer size");
+static_assert(SPI_MAX_TRANSFER_SIZE*8 == SPI_LL_DMA_MAX_BIT_LEN, "SPI_LL_DMA_MAX_BIT_LEN must be a whole number of bytes");
+static_assert(DISPLAY_UI_H % 4 == 0, "UI height must be a multiple of 4 for the IT8951 x alignment");
 
 static inline bool it8951_transcieve(const void *txdata, void *rxdata, size_t len) {
     // TODO: Could keep the CS active between transmissions! Would allow lower 
@@ -66,77 +76,88 @@ void IRAM_ATTR hrdy_isr(void *arg) {
 }
 
 FORCE_INLINE_ATTR void it8951_wait_hrdy(void) {
-    if(gpio_get_level(hrdy) == 0) {
+    // The semaphore may hold a stale token from an earlier edge, so re-check the level
+    while(gpio_get_level(hrdy) == 0) {
         // TODO: Using xTaskToNotify may be a quicker option
         xSemaphoreTake(hrdy_semaphore, portMAX_DELAY);
     }
 }
 
-__attribute__((always_inline, pure, optimize("Ofast"))) 
-static inline uint8_t IRAM_ATTR rgb565_to_gray4(const uint16_t color) {
-    static const uint8_t DRAM_ATTR lut[65536] = { 
-        #include "rgb565_to_gray4.txt" 
-    };
-    return lut[color];
-}
-// TODO: May need to remove the strict timing dependency of the dirty pixel
-// checking by following this: 
-//https://docs.lvgl.io/master/porting/display.html#decoupling-the-display-refresh-timer
-// This way the display can be forced to refresh after a wake-up event
+// Packed 4bpp copy of the rotated partial buffer that is sent to the IT8951
+EXT_RAM_BSS_ATTR static uint8_t gray4_buff[DISPLAY_DRAW_BUF_SIZE/2];
+
+// Rotates the L8 partial render (w x h) into a packed 4bpp image of h x w
+// pixels (UI x -> panel -y, UI y -> panel x). The source is read in tiles of 
+// 16 rows so that the cache lines of the PSRAM source stay hot.
 __attribute__((optimize("Ofast")))
-void IRAM_ATTR display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+static void l8_to_rotated_gray4(const uint8_t *src, int32_t w, int32_t h, uint32_t stride, uint8_t *dst) {
+    const int32_t dst_stride = h >> 1;
+    for(int32_t yb = 0; yb < h; yb += 16) {
+        const int32_t ye = min(yb + 16, h);
+        for(int32_t py = 0; py < w; py++) {
+            const uint8_t *p = src + yb*stride + (w - 1 - py);
+            uint8_t *o = dst + py*dst_stride + (yb >> 1);
+            for(int32_t y = yb; y < ye; y += 2, p += 2*stride) {
+                *o++ = (p[0] & 0xF0) | (p[stride] >> 4);
+            }
+        }
+    }
+}
+
+void display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
     static const stIT8951_ImageInfo_t img_info = {
         .rotation = IT8951_ROTATION_MODE_0,
         .bpp = IT8951_COLOR_DEPTH_BPP_4BIT,
         .endianness = IT8951_ENDIANNESS_BIG,
     };
+    // Bounding box of everything written since the last refresh
+    static int32_t x1, y1, x2, y2;
+    static bool dirty = false;
+
+    const int32_t w = lv_area_get_width(area);
+    const int32_t h = lv_area_get_height(area);
+    // display_rounder() guarantees that h is a multiple of 4
     const stRectangle_t rect = {
-        .x      = area->x1,
-        .y      = area->y1,
-        .width  = lv_area_get_width(area),
-        .height = lv_area_get_height(area)
+        .x      = area->y1,
+        .y      = DISPLAY_UI_W - 1 - area->x2,
+        .width  = h,
+        .height = w
     };
 
-    // Get the number of pixels needed to display
-    const uint32_t num_pix = rectangle_get_area(&rect);
-    // Convert the RGB565 pixel to GRAY4 and pack them back to the OG array.
-    // *px_map is contained within the draw_buff we defined in main.c. When the 
-    // flush_cb is called, LVGL is done with the processing of this buffer,
-    // therefore we're free to further modify it. Here we map 2 bytes into 4bits
-    uint16_t *color = (uint16_t*)px_map;
-    for(uint32_t i=0; i<num_pix; i++) {
-        // This loop should naturally stay within bounds
-        const uint8_t g4 = rgb565_to_gray4(*color++);
-        const bool odd = i & 0b1;
-        const uint32_t idx = i >> 1;
-        px_map[idx] = odd ? (px_map[idx] | g4) : (g4 << 4);
+    l8_to_rotated_gray4(px_map, w, h, lv_draw_buf_width_to_stride(w, LV_COLOR_FORMAT_L8), gray4_buff);
+    it8951_write_packed_pixels(&it8951_hdlr, &img_info, &rect, gray4_buff, (uint32_t)w*h);
+
+    if(!dirty) {
+        x1 = rect.x; y1 = rect.y;
+        x2 = rect.x + rect.width; y2 = rect.y + rect.height;
+        dirty = true;
+    } else {
+        x1 = min(x1, rect.x); y1 = min(y1, rect.y);
+        x2 = max(x2, rect.x + rect.width); y2 = max(y2, rect.y + rect.height);
     }
 
-    it8951_write_packed_pixels(&it8951_hdlr, &img_info, &rect, px_map, num_pix);
-    it8951_display_area(&it8951_hdlr, &rect, IT8951_DISPLAY_MODE_GC16);
+    // Refresh the panel once, after the last chunk of this render cycle
+    if(lv_display_flush_is_last(disp)) {
+        const stRectangle_t refresh = { .x = x1, .y = y1, .width = x2 - x1, .height = y2 - y1 };
+        it8951_display_area(&it8951_hdlr, &refresh, IT8951_DISPLAY_MODE_GC16);
+        dirty = false;
+    }
 
-    // lv_display_flush_is_last(display) to check if the last block of rendering
-
-    // This function must be called when the display has been updated
-    lv_disp_flush_ready(disp);
+    lv_display_flush_ready(disp);
 }
 
 __attribute__((optimize("Ofast"))) 
 void IRAM_ATTR display_rounder(lv_event_t *e) {
     // The IT8951 expects the x coordinates of the rectangle to be padded to the 
-    // nearest (16/bpp) pixel (padding to 4 pixels in our case)
-    // So a 2x1 rectangle at (3,0) coordinate should be sent as a 8x1 rectangle,
-    // like d0,d1,d2,p0,p1,d3,d4,d5, where 'dN' are dummy pixels and 'pN' are 
-    // the actual pixels. At 4bpp (4pixels per 16bit word) this will give
-    // 2 transmit words: 0xYXXX, 0xXXXZ, where Y=p0 and Z=p1, X=don't care. 
-    // This event is fired when an area on the display is invalidated. To ensure
-    // the above alignment requirements are met with no post-processing, we can
-    // expand the invalidated area so that x and x+w always land on a 4pixel 
-    // boundary.
+    // nearest (16/bpp) pixel (padding to 4 pixels in our case). The UI is 
+    // rotated by 90 degrees before it is sent, so the panel's x axis is the 
+    // UI's y axis. Expanding the invalidated area so that y1 and y2+1 always 
+    // land on a 4 pixel boundary meets this with no post-processing. The panel
+    // x offset is either y1 or DISPLAY_UI_H-1-y2, both multiples of 4.
     lv_area_t * area = lv_event_get_param(e);
-    area->x1 =   area->x1    & ~0b11;
-    // x2 is an inclusive pixel bound!
-    area->x2 = ((area->x2+4) & ~0b11)-1;
+    area->y1 =   area->y1    & ~0b11;
+    // y2 is an inclusive pixel bound!
+    area->y2 = ((area->y2+4) & ~0b11)-1;
 }
 
 void display_init(void) {
@@ -162,7 +183,7 @@ void display_init(void) {
     gpio_config(&(gpio_config_t){
         .pin_bit_mask = (1ULL << hrdy),
         .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLDOWN_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
         .intr_type = GPIO_INTR_POSEDGE,
     });
     hrdy_semaphore = xSemaphoreCreateBinary();
