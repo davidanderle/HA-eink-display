@@ -6,3 +6,4 @@ resources
 *.old
 lvgl_squareline
 .vscode/settings.json
+.DS_Store
