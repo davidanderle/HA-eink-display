@@ -51,7 +51,8 @@ static struct {
 static lv_obj_t * box(lv_obj_t * parent, int32_t x, int32_t y, int32_t w, int32_t h, uint8_t grey, int32_t radius) {
     lv_obj_t * o = lv_obj_create(parent);
     lv_obj_remove_style_all(o);
-    lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_scrollable(o, false);
+    lv_obj_set_clickable(o, false);
     lv_obj_set_pos(o, x, y);
     lv_obj_set_size(o, w, h);
     lv_obj_set_style_bg_color(o, lv_color_make(grey, grey, grey), 0);
@@ -119,21 +120,21 @@ static void build_chores(void) {
 static void build_energy(void) {
     const int32_t x = MARGIN + 388 + GAP + 540 + GAP;
     lv_obj_t * c = card(x, ROW1_Y, 388, ROW1_H, GREY_LIGHT);
-    const int32_t N = 88;       // node diameter
+    const int32_t N = 80;       // node diameter
     const int32_t cx = 194, cy = 156;
     // Node centres: solar (top), grid (left), heat (right), water (bottom)
-    static const lv_point_t off[UI_ENERGY_COUNT] = { {0, -120}, {-136, 0}, {136, 0}, {0, 120} };
+    static const lv_point_t off[UI_ENERGY_COUNT] = { {0, -108}, {-136, 0}, {136, 0}, {0, 108} };
     static const ui_icon_t icons[UI_ENERGY_COUNT] = { UI_ICON_SUN, UI_ICON_BOLT, UI_ICON_FLAME, UI_ICON_DROP };
 
     // Connectors first, so that they sit behind the nodes
-    box(c, cx - 2, cy - 120, 4, 240, GREY_LINE, 0);
+    box(c, cx - 2, cy - 108, 4, 216, GREY_LINE, 0);
     box(c, cx - 136, cy - 2, 272, 4, GREY_LINE, 0);
 
     lv_obj_t * center = box(c, cx - N/2, cy - N/2, N, N, 0xFF, LV_RADIUS_CIRCLE);
     outline(center, 5, LV_RADIUS_CIRCLE);
     lv_obj_set_style_bg_opa(center, LV_OPA_COVER, 0);
     lv_obj_set_style_bg_color(center, lv_color_white(), 0);
-    lv_obj_align(ui_icon_create(center, UI_ICON_HOUSE, 60), LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(ui_icon_create(center, UI_ICON_HOUSE, 54), LV_ALIGN_CENTER, 0, 0);
 
     for(int i = 0; i < UI_ENERGY_COUNT; i++) {
         const int32_t nx = cx + off[i].x - N/2, ny = cy + off[i].y - N/2;
@@ -141,7 +142,7 @@ static void build_energy(void) {
         outline(n, 5, LV_RADIUS_CIRCLE);
         lv_obj_set_style_bg_opa(n, LV_OPA_COVER, 0);
         lv_obj_set_style_bg_color(n, lv_color_white(), 0);
-        lv_obj_align(ui_icon_create(n, icons[i], 60), LV_ALIGN_CENTER, 0, 0);
+        lv_obj_align(ui_icon_create(n, icons[i], 54), LV_ALIGN_CENTER, 0, 0);
 
         // Top and bottom values sit next to the node, left and right ones below
         const bool vertical = (i == UI_ENERGY_SOLAR || i == UI_ENERGY_WATER);
@@ -181,7 +182,7 @@ static lv_obj_t * chip_create(lv_obj_t * parent, lv_obj_t ** out_label) {
     lv_obj_set_style_text_font(l, UI_FONT_LARGE, 0);
     lv_obj_set_style_text_color(l, lv_color_black(), 0);
     lv_obj_align(l, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_add_flag(chip, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(chip, true);
     *out_label = l;
     return chip;
 }
@@ -258,7 +259,7 @@ static void load_sample_data(void) {
 // single variable change
 void ui_screen_main_init(void) {
     ui_screen_main = lv_obj_create(NULL);
-    lv_obj_remove_flag(ui_screen_main, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollable(ui_screen_main, false);
     lv_obj_set_style_bg_color(ui_screen_main, lv_color_white(), 0);
     lv_obj_set_style_bg_opa(ui_screen_main, LV_OPA_COVER, 0);
     lv_obj_set_style_pad_all(ui_screen_main, 0, 0);
@@ -316,9 +317,9 @@ void ui_set_day(int row, ui_icon_t icon, const char * temp, const char * weekday
 void ui_set_event(int row, int person, int slot, const char * text) {
     if(row < 0 || row >= UI_DAYS || person < 0 || person >= UI_PERSONS || slot < 0 || slot >= UI_CHIPS) return;
     if(text == NULL) {
-        lv_obj_add_flag(day[row].chip[person][slot], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(day[row].chip[person][slot], true);
         return;
     }
     lv_label_set_text(day[row].chip_label[person][slot], text);
-    lv_obj_remove_flag(day[row].chip[person][slot], LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(day[row].chip[person][slot], false);
 }
